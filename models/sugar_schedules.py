@@ -6,13 +6,15 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from database import Base
+from .sugar_logs import SugarType
 
 class SugarSchedule(Base):
     __tablename__ = "sugar_schedules"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    time = Column(Time, nullable=False)  # e.g., 08:00:00
+    time = Column(Time, nullable=False)
+    sugar_type = Column(Enum(SugarType), nullable=False)
     duration_days = Column(Integer, nullable=False)
     start_date = Column(Date, default=date.today, nullable=False)
     end_date = Column(Date, nullable=True)  # Calculated: start_date + duration_days

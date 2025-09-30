@@ -17,6 +17,14 @@ from .sugar_schedules import SugarSchedule
 from .sugar_logs import SugarLog, SugarType
 from .insights import Insight, InsightPeriod
 
+# New tables per extended schema
+from .roles import UserRole, UserRoleEnum
+from .profiles import PatientProfile, DoctorProfile, GenderEnum
+from .connections import Connection, ConnectionTypeEnum, ConnectionStatusEnum
+from .weight_logs import WeightLog
+from .reminders import Reminder
+from .patient_notes import PatientNote
+
 # You can also define a __all__ variable to control what `from models import *` does, which is good practice.
 __all__ = [
     "User",
@@ -33,4 +41,16 @@ __all__ = [
     "SugarType",
     "Insight",
     "InsightPeriod",
+    # New
+    "UserRole",
+    "UserRoleEnum",
+    "PatientProfile",
+    "DoctorProfile",
+    "GenderEnum",
+    "Connection",
+    "ConnectionTypeEnum",
+    "ConnectionStatusEnum",
+    "WeightLog",
+    "Reminder",
+    "PatientNote",
 ]

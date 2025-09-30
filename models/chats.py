@@ -12,8 +12,9 @@ class Chat(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    topic = Column(String, nullable=False)
-    summary = Column(String, nullable=False, default="")
+    topic = Column(String(500), nullable=False)
+    summary = Column(Text, nullable=False, default="")
+    is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
 

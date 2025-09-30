@@ -6,6 +6,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from database import Base
+from sqlalchemy.dialects.postgresql import JSONB
 
 class InsightPeriod(enum.Enum):
     DAILY = "daily"
@@ -24,7 +25,7 @@ class Insight(Base):
     
     title = Column(String(200), nullable=False)           # Brief title for the insight
     summary = Column(Text, nullable=False)                # Human-readable summary for user
-    json_data = Column(Text, nullable=True)               # JSON string with graphs, breakdowns, scores
+    json_data = Column(JSONB, nullable=True)
     
     # Metadata
     version = Column(String(10), default="1.0", nullable=False)  # For future insight format changes

@@ -10,9 +10,7 @@ from database import Base
 class SugarType(enum.Enum):
     FASTING = "FASTING"
     RANDOM = "RANDOM"
-    # AFTER_MEAL = "after_meal"
-    # BEDTIME = "bedtime"
-    # POST_PRANDIAL_2H = "post_prandial_2h"
+    POST_MEAL = "POST_MEAL"
 
 class SugarLog(Base):
     __tablename__ = "sugar_logs"

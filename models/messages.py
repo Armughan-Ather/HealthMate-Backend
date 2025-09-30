@@ -6,15 +6,16 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from database import Base
+from sqlalchemy.dialects.postgresql import JSONB
 
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
     chat_id = Column(Integer, ForeignKey("chats.id"), nullable=True)
-    request = Column(String, nullable=False)
-    response = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), default=datetime.now)
-    updated_at = Column(DateTime(timezone=True), default=datetime.now, onupdate=datetime.now)
+    request = Column(Text, nullable=False)
+    response = Column(Text, nullable=False)
+    metadata = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
 
     chat = relationship("Chat", back_populates="messages")

@@ -12,16 +12,18 @@ class Medicine(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False, index=True)
-    strength = Column(String(50), nullable=False)  # e.g., "500mg", "2.5ml", "0.25mg"
-    
+    strength = Column(String(50), nullable=False)
+    form = Column(String(50), nullable=False)
+    generic_name = Column(String(200), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
     medication_list = relationship("Medication", back_populates="medicine")
 
     __table_args__ = (
-        UniqueConstraint('name', 'strength', name='unique_medicine_strength'),
+        UniqueConstraint('name', 'strength', 'form', name='unique_medicine_strength_form'),
         CheckConstraint("LENGTH(name) > 0", name="check_medicine_name_not_empty"),
         CheckConstraint("LENGTH(strength) > 0", name="check_strength_not_empty"),
     )
