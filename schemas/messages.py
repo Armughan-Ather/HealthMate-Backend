@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Any
 
 
 class MessagePair(BaseModel):
@@ -11,6 +11,7 @@ class MessagePair(BaseModel):
 class MessageCreate(BaseModel):
     chat_id: Optional[int] = None
     request: str
+    metadata: Optional[Any] = None
 
 
 class Regenerate_Message(BaseModel):
@@ -22,6 +23,7 @@ class MessageResponse(BaseModel):
     chat_id: Optional[int] = None
     request: str
     response: str
+    metadata: Optional[Any] = None
     created_at: datetime
     updated_at: datetime
 

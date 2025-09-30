@@ -95,6 +95,8 @@ def create_user(db: Session, user_data: UserCreate):
         email=user_data.email,
         name=user_data.name,
         password=hashed_password,
+        phone=user_data.phone,
+        address=user_data.address,
 
         # BP thresholds
         bp_systolic_min=user_data.bp_systolic_min,
@@ -108,8 +110,6 @@ def create_user(db: Session, user_data: UserCreate):
         sugar_random_min=user_data.sugar_random_min,
         sugar_random_max=user_data.sugar_random_max,
 
-        # Attendant emails
-        attendant_emails=user_data.attendant_emails,
     )
     db.add(user)
     db.commit()
@@ -155,8 +155,12 @@ def update_user(db: Session, user_id: int, user_data: UserUpdate):
     if user_data.name is not None:
         user.name = user_data.name
 
-    if user_data.attendant_emails is not None:
-        user.attendant_emails = user_data.attendant_emails
+    if user_data.phone is not None:
+        user.phone = user_data.phone
+    if user_data.address is not None:
+        user.address = user_data.address
+    if user_data.is_active is not None:
+        user.is_active = user_data.is_active
 
     if user_data.bp_systolic_min is not None:
         user.bp_systolic_min = user_data.bp_systolic_min
@@ -203,96 +207,32 @@ def delete_user(db: Session, user_id: int):
 
 
 def add_attendant_email(db: Session, user_id: int, email: str):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        return None
-
-    try:
-        validate_email(email)
-    except EmailNotValidError:
-        raise HTTPException(status_code=400, detail="Invalid email format")
-
-    if user.attendant_emails is None:
-        user.attendant_emails = []
-
-    if email.lower() not in user.attendant_emails:
-        user.attendant_emails.append(email.lower())
-        db.commit()
-        db.refresh(user)
-
-    return user
+    raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
 
 
 def delete_attendant_email(db: Session, user_id: int, email: str):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user or not user.attendant_emails:
-        return None
-
-    if email.lower() in user.attendant_emails:
-        user.attendant_emails.remove(email)
-        db.commit()
-        db.refresh(user)
-
-    return user
+    raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
 
 
 def update_single_attendant_email(db: Session, user_id: int, old_email: str, new_email: str):
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found."
-        )
-    if not user.attendant_emails:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No attendant emails configured."
-        )
+    raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
 
-    try:
-        validate_email(old_email)
-    except EmailNotValidError:
-        raise HTTPException(status_code=400, detail="Invalid old email format")
-    
-    try:
-        validate_email(new_email)
-    except EmailNotValidError:
-        raise HTTPException(status_code=400, detail="Invalid new email format")
+# def send_email_to_attendants(attendant_emails: list[str], subject: str, body: str):
+#     if not attendant_emails:
+#         print("⚠️ No attendant emails provided.")
+#         return {"sent_to": [], "failed": []}
 
-    if old_email.lower() not in user.attendant_emails:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Old email not found in user's attendant emails."
-        )
+#     sent_emails = []
+#     failed_emails = []
 
-    if new_email.lower() in user.attendant_emails:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New email already exists in user's attendant emails."
-        )
+#     for email in attendant_emails:
+#         try:
+#             send_email(email, subject, body)
+#             sent_emails.append(email)
+#         except Exception as e:
+#             print(f"❌ Failed to send email to {email}: {e}")
+#             failed_emails.append({"email": email, "error": str(e)})
 
-    index = user.attendant_emails.index(old_email)
-    user.attendant_emails[index] = new_email.lower()
-    db.commit()
-    db.refresh(user)
-    return user
-
-def send_email_to_attendants(attendant_emails: list[str], subject: str, body: str):
-    if not attendant_emails:
-        print("⚠️ No attendant emails provided.")
-        return {"sent_to": [], "failed": []}
-
-    sent_emails = []
-    failed_emails = []
-
-    for email in attendant_emails:
-        try:
-            send_email(email, subject, body)
-            sent_emails.append(email)
-        except Exception as e:
-            print(f"❌ Failed to send email to {email}: {e}")
-            failed_emails.append({"email": email, "error": str(e)})
-
-    return {"sent_to": sent_emails, "failed": failed_emails}
+#     return {"sent_to": sent_emails, "failed": failed_emails}
 
 # def update_user(db: Session, user_id: int, user_data: UserUpdate):

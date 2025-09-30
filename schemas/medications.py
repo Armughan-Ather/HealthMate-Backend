@@ -9,6 +9,8 @@ class MedicationScheduleCreate(BaseModel):
 class MedicationCreateWithSchedules(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     strength: str = Field(..., min_length=1, max_length=50)
+    form: str = Field(..., min_length=1, max_length=50)
+    generic_name: Optional[str] = Field(None, max_length=200)
     purpose: Optional[str] = Field(None, max_length=500)
     start_date: date
     end_date: date
@@ -25,6 +27,8 @@ class MedicationCreateWithSchedules(BaseModel):
 class MedicationUpdate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     strength: str = Field(..., min_length=1, max_length=50)
+    form: str = Field(..., min_length=1, max_length=50)
+    generic_name: Optional[str] = Field(None, max_length=200)
     purpose: Optional[str] = Field(None, max_length=500)
     start_date: date
     end_date: date

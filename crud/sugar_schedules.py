@@ -4,6 +4,7 @@ from models.sugar_schedules import SugarSchedule
 from schemas.sugar_schedules import SugarScheduleCreate
 from typing import List, Optional
 from fastapi import HTTPException, status
+from fastapi import HTTPException, status
 
 def get_user_sugar_schedules(db: Session, user_id: int) -> List[SugarSchedule]:
     return db.query(SugarSchedule).filter_by(user_id=user_id).all()
@@ -46,6 +47,7 @@ def create_sugar_schedule(db: Session, user_id: int, payload: SugarScheduleCreat
         schedule = SugarSchedule(
             user_id=user_id,
             time=t,
+            sugar_type=payload.sugar_type,
             duration_days=duration_days,
             start_date=start_date,
             end_date=end_date

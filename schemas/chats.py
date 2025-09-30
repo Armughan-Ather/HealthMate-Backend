@@ -17,6 +17,7 @@ class ChatUpdate(BaseModel):
 
 class ChatResponse(ChatBase):
     id: int
+    is_active: bool
     created_at: datetime
     updated_at: datetime
 

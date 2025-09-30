@@ -12,7 +12,7 @@ from fastapi import HTTPException, status
 def create_medication_with_schedules(db: Session, user_id: int, payload) -> Medication:
     """Create medication along with its schedules."""
     # 1️⃣ Get or create medicine
-    medicine = create_medicine(db, payload.name, payload.strength)
+    medicine = create_medicine(db, payload.name, payload.strength, payload.form, payload.generic_name)
 
     # 2️⃣ Compute duration
     duration_days = (payload.end_date - payload.start_date).days + 1
@@ -106,7 +106,7 @@ def update_medication(db: Session, medication_id: int, payload: MedicationUpdate
         )
 
     # Get or create medicine
-    medicine = create_medicine(db, payload.name.strip(), payload.strength.strip())
+    medicine = create_medicine(db, payload.name.strip(), payload.strength.strip(), payload.form.strip(), (payload.generic_name.strip() if payload.generic_name else None))
 
     # Update medication fields
     medication.medicine_id = medicine.id

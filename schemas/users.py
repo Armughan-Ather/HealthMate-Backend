@@ -32,7 +32,8 @@ class UserCreate(UserBase):
     google_firebase_uid: Optional[str] = None  # Store Firebase UID if applicable
     microsoft_firebase_uid: Optional[str] = None  # Store Firebase UID if applicable
 
-    attendant_emails: Optional[List[EmailStr]] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
 
     bp_systolic_min: Optional[int] = None
     bp_systolic_max: Optional[int] = None
@@ -49,7 +50,9 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
 
-    attendant_emails: Optional[List[EmailStr]] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    is_active: Optional[bool] = None
 
     bp_systolic_min: Optional[int]
     bp_systolic_max: Optional[int]
@@ -70,8 +73,9 @@ class UserLogin(BaseModel):
 
 
 class UserResponse(UserBase):
-    # Attendant emails
-    attendant_emails: Optional[List[EmailStr]] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    is_active: bool
 
     # Thresholds
     bp_systolic_min: Optional[int] = None
