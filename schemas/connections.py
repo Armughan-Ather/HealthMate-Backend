@@ -1,34 +1,37 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 from enum import Enum
 
-class ConnectionType(str, Enum):
-    DOCTOR = "doctor"
-    CAREGIVER = "caregiver"
-    FAMILY = "family"
-    OTHER = "other"
+class ConnectionTypeEnum(str, Enum):
+    DOCTOR = "DOCTOR"
+    ATTENDANT = "ATTENDANT"
+
+class ConnectionStatusEnum(str, Enum):
+    PENDING = "PENDING"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+    REVOKED = "REVOKED"
 
 class ConnectionBase(BaseModel):
-    name: str
-    email: EmailStr
-    phone: Optional[str] = None
-    connection_type: ConnectionType
-    notes: Optional[str] = None
+    patient_id: int
+    connected_user_id: int
+    connection_type: ConnectionTypeEnum
+    request_message: Optional[str] = None
 
 class ConnectionCreate(ConnectionBase):
     pass
 
-class ConnectionUpdate(ConnectionBase):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    connection_type: Optional[ConnectionType] = None
+class ConnectionUpdate(BaseModel):
+    status: ConnectionStatusEnum
+    responded_at: Optional[datetime] = None
 
 class ConnectionResponse(ConnectionBase):
     id: int
-    user_id: int
+    status: ConnectionStatusEnum
+    requested_at: datetime
+    responded_at: Optional[datetime]
     created_at: datetime
-    updated_at: datetime
 
     class Config:
         from_attributes = True
