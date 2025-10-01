@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
-from app.models.patient_notes import PatientNote
-from app.schemas.patient_notes import PatientNoteCreate, PatientNoteUpdate
+from models.patient_notes import PatientNote
+from schemas.patient_notes import PatientNoteCreate, PatientNoteUpdate
 
 def create_note(db: Session, note: PatientNoteCreate) -> PatientNote:
     db_note = PatientNote(**note.model_dump())

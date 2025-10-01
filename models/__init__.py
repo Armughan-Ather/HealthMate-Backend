@@ -4,7 +4,7 @@
 # to SQLAlchemy and other parts of the application from a single point.
 # This solves circular import and load-order issues.
 
-from .users import User
+from .users import User, GenderEnum
 from .chats import Chat
 from .messages import Message
 from .medicines import Medicine
@@ -18,8 +18,9 @@ from .sugar_logs import SugarLog, SugarType
 from .insights import Insight, InsightPeriod
 
 # New tables per extended schema
-from .roles import UserRole, UserRoleEnum
-from .profiles import PatientProfile, DoctorProfile, GenderEnum
+from .user_roles import UserRole, UserRoleEnum
+from .patient_profiles import PatientProfile
+from .doctor_profiles import DoctorProfile
 from .connections import Connection, ConnectionTypeEnum, ConnectionStatusEnum
 from .weight_logs import WeightLog
 from .reminders import Reminder

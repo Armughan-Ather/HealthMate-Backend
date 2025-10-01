@@ -1,28 +1,28 @@
 from sqlalchemy.orm import Session
-from app.models.weights import Weight
-from app.schemas.weights import WeightCreate, WeightUpdate
+from models.weight_logs import WeightLog
+from schemas.weight_logs import WeightCreate, WeightUpdate
 from typing import List, Optional
 from datetime import datetime
 
-def create_weight(db: Session, weight: WeightCreate) -> Weight:
-    db_weight = Weight(**weight.model_dump())
+def create_weight(db: Session, weight: WeightCreate) -> WeightLog:
+    db_weight = WeightLog(**weight.model_dump())
     db.add(db_weight)
     db.commit()
     db.refresh(db_weight)
     return db_weight
 
-def get_weight(db: Session, weight_id: int) -> Optional[Weight]:
-    return db.query(Weight).filter(Weight.id == weight_id).first()
+def get_weight(db: Session, weight_id: int) -> Optional[WeightLog]:
+    return db.query(WeightLog).filter(WeightLog.id == weight_id).first()
 
 def get_patient_weights(
     db: Session, 
     patient_id: int, 
     skip: int = 0, 
     limit: int = 100
-) -> List[Weight]:
-    return db.query(Weight)\
-        .filter(Weight.patient_id == patient_id)\
-        .order_by(Weight.measured_at.desc())\
+) -> List[WeightLog]:
+    return db.query(WeightLog)\
+        .filter(WeightLog.patient_id == patient_id)\
+        .order_by(WeightLog.measured_at.desc())\
         .offset(skip)\
         .limit(limit)\
         .all()
@@ -31,7 +31,7 @@ def update_weight(
     db: Session, 
     weight_id: int, 
     weight: WeightUpdate
-) -> Optional[Weight]:
+) -> Optional[WeightLog]:
     db_weight = get_weight(db, weight_id)
     if db_weight:
         update_data = weight.model_dump(exclude_unset=True)

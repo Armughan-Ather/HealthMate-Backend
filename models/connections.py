@@ -34,5 +34,3 @@ class Connection(Base):
         UniqueConstraint('patient_id', 'connected_user_id', 'connection_type', name='unique_connection'),
         CheckConstraint('patient_id != connected_user_id', name='check_different_users'),
     )
-
-

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from app.models.profiles import DoctorProfile, PatientProfile
-from app.schemas.profiles import DoctorProfileCreate, DoctorProfileUpdate, PatientProfileCreate, PatientProfileUpdate
+from models.patient_profiles import PatientProfile
+from models.doctor_profiles import DoctorProfile
+from schemas.doctor_profiles import DoctorProfileCreate, DoctorProfileUpdate, PatientProfileCreate, PatientProfileUpdate
 from typing import List, Optional
 from datetime import datetime
 

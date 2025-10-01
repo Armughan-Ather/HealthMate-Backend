@@ -1,9 +1,20 @@
 from pydantic import BaseModel, Field
 from datetime import datetime, date, time
 from typing import Optional
+from enum import Enum
+
+class ReminderTagEnum(str, Enum):
+    APPOINTMENT = "APPOINTMENT"
+    WATER = "WATER"
+    EXERCISE = "EXERCISE"
+    SLEEP = "SLEEP"
+    MEAL = "MEAL"
+    LAB_TEST = "LAB_TEST"
+    THERAPY = "THERAPY"
+    VACCINATION = "VACCINATION"
 
 class ReminderBase(BaseModel):
-    tags: str = Field(..., min_length=1, max_length=100)
+    tags: ReminderTagEnum
     topic: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
     scheduled_time: time
@@ -16,7 +27,7 @@ class ReminderCreate(ReminderBase):
     created_by: Optional[int] = None
 
 class ReminderUpdate(BaseModel):
-    tags: Optional[str] = Field(None, min_length=1, max_length=100)
+    tags: Optional[ReminderTagEnum] = None
     topic: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     scheduled_time: Optional[time] = None

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.core.deps import get_db, get_current_user
-from app.crud import weights as weights_crud
-from app.schemas.weights import WeightCreate, WeightUpdate, WeightResponse
+from middlewares.auth import get_current_user
+from database import get_db
+from crud import weight_logs as weights_crud
+from schemas.weight_logs import WeightCreate, WeightUpdate, WeightResponse
 
 router = APIRouter()
 

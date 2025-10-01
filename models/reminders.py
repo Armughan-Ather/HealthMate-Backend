@@ -1,6 +1,18 @@
 from datetime import datetime, date, time
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Time, ForeignKey, CheckConstraint, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, Time, ForeignKey, CheckConstraint, Text, Enum
+import enum
 from database import Base
+
+
+class ReminderTagEnum(enum.Enum):
+    APPOINTMENT = "APPOINTMENT"
+    WATER = "WATER"
+    EXERCISE = "EXERCISE"
+    SLEEP = "SLEEP"
+    MEAL = "MEAL"
+    LAB_TEST = "LAB_TEST"
+    THERAPY = "THERAPY"
+    VACCINATION = "VACCINATION"
 
 
 class Reminder(Base):
@@ -8,7 +20,7 @@ class Reminder(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    tags = Column(String(100), nullable=False)
+    tags = Column(Enum(ReminderTagEnum), nullable=False)
     topic = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     scheduled_time = Column(Time, nullable=False)
@@ -22,7 +34,6 @@ class Reminder(Base):
     __table_args__ = (
         CheckConstraint("duration_days > 0", name="check_positive_duration"),
         CheckConstraint("LENGTH(topic) > 0", name="check_topic_not_empty"),
-        CheckConstraint("LENGTH(tags) > 0", name="check_tags_not_empty"),
     )
 
 

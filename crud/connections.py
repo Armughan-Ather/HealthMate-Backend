@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
-from app.models.connections import Connection, ConnectionStatusEnum
-from app.schemas.connections import ConnectionCreate, ConnectionUpdate
+from models.connections import Connection, ConnectionStatusEnum
+from schemas.connections import ConnectionCreate, ConnectionUpdate
 
 def create_connection(db: Session, connection: ConnectionCreate) -> Connection:
     db_connection = Connection(

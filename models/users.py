@@ -9,11 +9,17 @@ from sqlalchemy.orm import relationship
 from database import Base
 from sqlalchemy.ext.mutable import MutableList
 
+class GenderEnum(enum.Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
+    OTHER = "OTHER"
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
+    gender = Column(Enum(GenderEnum), nullable=True)
     phone = Column(String(20), nullable=True)
     address = Column(Text, nullable=True)
     name = Column(String(100), nullable=False)

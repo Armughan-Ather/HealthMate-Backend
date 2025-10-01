@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from app.core.deps import get_db, get_current_user
-from app.crud import patient_notes as notes_crud
-from app.schemas.patient_notes import (
+from middlewares.auth import get_current_user
+from database import get_db
+from crud import patient_notes as notes_crud
+from schemas.patient_notes import (
     PatientNoteCreate,
     PatientNoteUpdate,
     PatientNoteResponse
