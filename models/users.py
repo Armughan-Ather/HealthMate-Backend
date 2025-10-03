@@ -2,7 +2,9 @@ from sqlalchemy import (
     Column, Integer, String, Text, Boolean, Date, 
     DateTime, Enum, CheckConstraint, Index
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
+import re
+from datetime import date
 from sqlalchemy.sql import func
 from database import Base
 from constants.enums import GenderEnum
@@ -82,3 +84,53 @@ class User(Base):
         Index('idx_user_email_verified', 'email_verified', 'is_active'),
         Index('idx_user_created_at', 'created_at'),
     )
+
+    @validates('email')
+    def validate_email(self, key, value):
+        if not value or not re.match(r"[^@]+@[^@]+\.[^@]+", value):
+            raise ValueError("Invalid email address format")
+        return value.strip().lower()
+
+    @validates('name')
+    def validate_name(self, key, value):
+        value = value.strip()
+        if len(value) < 2 or len(value) > 100:
+            raise ValueError("Name must be between 2 and 100 characters")
+        return value
+
+    @validates('password')
+    def validate_password(self, key, value):
+        if value is not None:
+            if len(value) < 8:
+                raise ValueError("Password must be at least 8 characters long")
+            if not re.search(r"[A-Z]", value):
+                raise ValueError("Password must contain at least one uppercase letter")
+            if not re.search(r"[a-z]", value):
+                raise ValueError("Password must contain at least one lowercase letter")
+            if not re.search(r"\d", value):
+                raise ValueError("Password must contain at least one number")
+        return value
+
+    @validates('phone')
+    def validate_phone(self, key, value):
+        if value:
+            digits = re.sub(r'\D', '', value)
+            if len(digits) < 10:
+                raise ValueError("Phone number must have at least 10 digits")
+            return digits
+        return value
+
+    @validates('date_of_birth')
+    def validate_date_of_birth(self, key, value):
+        if value:
+            if value >= date.today():
+                raise ValueError("Date of birth must be in the past")
+            if value < date(1900, 1, 1):
+                raise ValueError("Date of birth is too far in the past")
+        return value
+
+    @validates('gender')
+    def validate_gender(self, key, value):
+        if value is not None and value not in GenderEnum:
+            raise ValueError("Invalid gender value")
+        return value

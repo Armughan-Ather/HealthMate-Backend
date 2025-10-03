@@ -2,7 +2,8 @@ from sqlalchemy import (
     Column, Integer, Boolean, Date, Time, 
     DateTime, ForeignKey, Enum, CheckConstraint, Index, ARRAY
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
+from datetime import date
 from sqlalchemy.sql import func
 from database import Base
 from constants.enums import FrequencyEnum, DayOfWeekEnum, SugarTypeEnum
@@ -43,3 +44,40 @@ class SugarSchedule(Base):
         ),
         Index('idx_sugar_schedule_patient_active', 'patient_profile_id', 'is_active'),
     )
+
+    @validates('duration_days')
+    def validate_duration_days(self, key, value):
+        if value is not None:
+            if value <= 0:
+                raise ValueError("duration_days must be positive")
+            if value > 3650:
+                raise ValueError("duration_days must not exceed 10 years (3650 days)")
+        return value
+
+    @validates('start_date')
+    def validate_start_date(self, key, value):
+        if value < date(2000, 1, 1):
+            raise ValueError("start_date must not be earlier than 2000-01-01")
+        return value
+
+    @validates('frequency', 'custom_days')
+    def validate_frequency_custom_days(self, key, value):
+        """
+        Validate the consistency between frequency and custom_days.
+        Mirrors the DB constraint but catches issues earlier at the ORM layer.
+        """
+        # temporarily assign to current object for cross-field validation
+        setattr(self, key, value)
+
+        freq = getattr(self, 'frequency', None)
+        days = getattr(self, 'custom_days', None)
+
+        if freq is not None:
+            if freq == FrequencyEnum.DAILY and days is not None:
+                raise ValueError("custom_days must be NULL when frequency is DAILY")
+            elif freq == FrequencyEnum.WEEKLY and (days is None or len(days) == 0):
+                raise ValueError("custom_days must be provided when frequency is WEEKLY")
+            elif freq == FrequencyEnum.MONTHLY and days is not None:
+                raise ValueError("custom_days must be NULL when frequency is MONTHLY")
+
+        return value

@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, Integer, String, Text, Boolean, Date, Time, 
     DateTime, ForeignKey, Enum, CheckConstraint, Index, ARRAY
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 from database import Base
 from constants.enums import FrequencyEnum, DayOfWeekEnum
@@ -50,3 +50,17 @@ class Reminder(Base):
         Index('idx_reminder_patient_active', 'patient_profile_id', 'is_active'),
         Index('idx_reminder_start_date', 'start_date'),
     )
+
+    @validates('custom_days', always=True)
+    def validate_frequency_and_custom_days(cls, v, values):
+        freq = values.get('frequency')
+        if freq == FrequencyEnum.DAILY:
+            if v is not None:
+                raise ValueError("custom_days must be NULL when frequency is DAILY")
+        elif freq == FrequencyEnum.WEEKLY:
+            if not v or len(v) == 0:
+                raise ValueError("custom_days must be provided when frequency is WEEKLY")
+        elif freq == FrequencyEnum.MONTHLY:
+            if v is not None:
+                raise ValueError("custom_days must be NULL when frequency is MONTHLY")
+        return v

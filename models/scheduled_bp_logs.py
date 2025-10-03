@@ -2,7 +2,8 @@ from sqlalchemy import (
     Column, Integer, String, 
     DateTime, ForeignKey, CheckConstraint, Index
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
+from datetime import datetime
 from sqlalchemy.sql import func
 from database import Base
 
@@ -36,3 +37,21 @@ class ScheduledBPLog(Base):
         Index('idx_scheduled_bp_log_checked_at', 'checked_at'),
         Index('idx_scheduled_bp_log_schedule', 'schedule_id', 'checked_at'),
     )
+
+    @validates('systolic')
+    def validate_systolic_greater_than_diastolic(cls, v, values):
+        diastolic = values.get('diastolic')
+        if diastolic is not None and v <= diastolic:
+            raise ValueError('systolic must be greater than diastolic')
+        return v
+
+    @validates('checked_at')
+    def validate_checked_at_reasonable(cls, v):
+        min_date = datetime(2000, 1, 1)
+        max_date = datetime.utcnow().replace(microsecond=0)
+        if v < min_date:
+            raise ValueError('checked_at must be on or after 2000-01-01')
+        # Allow checked_at up to 1 day in the future (like the SQL constraint)
+        if v > max_date.replace(microsecond=0) and (v - max_date).total_seconds() > 86400:
+            raise ValueError('checked_at cannot be more than 1 day in the future')
+        return v

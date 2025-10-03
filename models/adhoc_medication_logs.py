@@ -2,7 +2,8 @@ from sqlalchemy import (
     Column, Integer, String,
     DateTime, ForeignKey, CheckConstraint, Index
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
+from datetime import datetime, timezone
 from sqlalchemy.sql import func
 from database import Base
 
@@ -33,3 +34,28 @@ class AdhocMedicationLog(Base):
         CheckConstraint("taken_at <= CURRENT_TIMESTAMP + INTERVAL '1 day'", name='check_adhoc_taken_at_not_future'),
         Index('idx_adhoc_med_log_patient_taken', 'patient_profile_id', 'taken_at'),
     )
+
+    @validates('dosage_taken')
+    def validate_dosage_taken(self, key, value):
+        if not value or not value.strip():
+            raise ValueError("Dosage taken cannot be empty")
+        if len(value.strip()) > 100:
+            raise ValueError("Dosage taken must be ≤ 100 characters")
+        return value.strip()
+
+    @validates('taken_at')
+    def validate_taken_at(self, key, value):
+        if not value:
+            raise ValueError("taken_at is required")
+        if value < datetime(2000, 1, 1, tzinfo=timezone.utc):
+            raise ValueError("taken_at must be after year 2000")
+        now = datetime.now(timezone.utc)
+        if value > now:
+            raise ValueError("taken_at cannot be in the future")
+        return value
+
+    @validates('notes')
+    def validate_notes(self, key, value):
+        if value and len(value) > 500:
+            raise ValueError("Notes cannot exceed 500 characters")
+        return value

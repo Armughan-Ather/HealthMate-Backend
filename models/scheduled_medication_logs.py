@@ -2,7 +2,8 @@ from sqlalchemy import (
     Column, Integer, String, 
     DateTime, ForeignKey, CheckConstraint, Index
 )
-from sqlalchemy.orm import relationship, declarative_base, validates
+from sqlalchemy.orm import relationship, validates
+from datetime import datetime
 from sqlalchemy.sql import func
 from database import Base
 
@@ -11,7 +12,6 @@ class ScheduledMedicationLog(Base):
     
     id = Column(Integer, primary_key=True)
     medication_schedule_id = Column(Integer, ForeignKey('medication_schedules.id', ondelete='CASCADE'), nullable=False, index=True)
-    dosage_taken = Column(String(100), nullable=False)
     notes = Column(String(500), nullable=True)
     
     taken_at = Column(DateTime(timezone=True), nullable=False)
@@ -31,3 +31,13 @@ class ScheduledMedicationLog(Base):
         Index('idx_scheduled_med_log_taken_at', 'taken_at'),
         Index('idx_scheduled_med_log_schedule', 'medication_schedule_id', 'taken_at'),
     )
+
+    @validates('taken_at')
+    def validate_taken_at_range(cls, v):
+        min_date = datetime(2000, 1, 1)
+        if v < min_date:
+            raise ValueError('taken_at must be on or after 2000-01-01')
+        now = datetime.utcnow()
+        if (v - now).total_seconds() > 86400:  # more than 1 day in the future
+            raise ValueError('taken_at cannot be more than 1 day in the future')
+        return v

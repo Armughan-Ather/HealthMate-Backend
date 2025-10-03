@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, Integer, String, Float, 
     DateTime, ForeignKey, CheckConstraint
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 from database import Base
 
@@ -69,3 +69,31 @@ class PatientProfile(Base):
         CheckConstraint("sugar_random_min IS NULL OR sugar_random_max IS NULL OR sugar_random_min < sugar_random_max", 
                        name='check_sugar_random_min_max_order'),
     )
+
+    @validates('bp_systolic_max')
+    def check_systolic_order(cls, v, values):
+        min_val = values.get('bp_systolic_min')
+        if v is not None and min_val is not None and v <= min_val:
+            raise ValueError('bp_systolic_max must be greater than bp_systolic_min')
+        return v
+
+    @validates('bp_diastolic_max')
+    def check_diastolic_order(cls, v, values):
+        min_val = values.get('bp_diastolic_min')
+        if v is not None and min_val is not None and v <= min_val:
+            raise ValueError('bp_diastolic_max must be greater than bp_diastolic_min')
+        return v
+
+    @validates('sugar_fasting_max')
+    def check_fasting_order(cls, v, values):
+        min_val = values.get('sugar_fasting_min')
+        if v is not None and min_val is not None and v <= min_val:
+            raise ValueError('sugar_fasting_max must be greater than sugar_fasting_min')
+        return v
+
+    @validates('sugar_random_max')
+    def check_random_order(cls, v, values):
+        min_val = values.get('sugar_random_min')
+        if v is not None and min_val is not None and v <= min_val:
+            raise ValueError('sugar_random_max must be greater than sugar_random_min')
+        return v

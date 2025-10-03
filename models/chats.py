@@ -2,7 +2,7 @@ from sqlalchemy import (
     Column, Integer, String, Text, Boolean,
     DateTime, ForeignKey, CheckConstraint, Index
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 from database import Base
 
@@ -30,3 +30,28 @@ class Chat(Base):
         Index('idx_chat_user_active', 'user_id', 'is_active'),
         Index('idx_chat_created_at', 'created_at'),
     )
+
+    @validates('topic')
+    def validate_topic(self, key, value):
+        if not value or not value.strip():
+            raise ValueError("Chat topic cannot be empty")
+        value = value.strip()
+        if len(value) < 3:
+            raise ValueError("Chat topic must be at least 3 characters long")
+        if len(value) > 500:
+            raise ValueError("Chat topic cannot exceed 500 characters")
+        return value
+
+    @validates('summary')
+    def validate_summary(self, key, value):
+        if value is None:
+            return ''
+        if len(value) > 2000:
+            raise ValueError("Chat summary cannot exceed 2000 characters")
+        return value
+
+    @validates('is_active')
+    def validate_is_active(self, key, value):
+        if not isinstance(value, bool):
+            raise ValueError("is_active must be a boolean")
+        return value

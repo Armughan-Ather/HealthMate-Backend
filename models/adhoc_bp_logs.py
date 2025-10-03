@@ -2,7 +2,8 @@ from sqlalchemy import (
     Column, Integer, String,
     DateTime, ForeignKey, CheckConstraint, Index
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, validates
+from datetime import datetime, timezone
 from sqlalchemy.sql import func
 from database import Base
 
@@ -36,3 +37,50 @@ class AdhocBPLog(Base):
         CheckConstraint("checked_at <= CURRENT_TIMESTAMP + INTERVAL '1 day'", name='check_adhoc_bp_checked_at_not_future'),
         Index('idx_adhoc_bp_log_patient_checked', 'patient_profile_id', 'checked_at'),
     )
+
+    @validates('systolic')
+    def validate_systolic(self, key, value):
+        if value < 50 or value > 300:
+            raise ValueError("Systolic must be between 50 and 300 mmHg")
+        return value
+
+    @validates('diastolic')
+    def validate_diastolic(self, key, value):
+        if value < 30 or value > 200:
+            raise ValueError("Diastolic must be between 30 and 200 mmHg")
+        return value
+
+    @validates('pulse')
+    def validate_pulse(self, key, value):
+        if value is not None:
+            if value < 30 or value > 250:
+                raise ValueError("Pulse must be between 30 and 250 bpm")
+        return value
+
+    @validates('checked_at')
+    def validate_checked_at(self, key, value):
+        if value is None:
+            raise ValueError("checked_at is required")
+        now = datetime.now(timezone.utc)
+        if value < datetime(2000, 1, 1, tzinfo=timezone.utc):
+            raise ValueError("checked_at must be after year 2000")
+        if value > now.replace(microsecond=0) + (now - now):  # basically 'now'
+            raise ValueError("checked_at cannot be in the future")
+        return value
+
+    @validates('systolic', 'diastolic')
+    def validate_bp_relation(self, key, value):
+        """
+        Additional check to ensure systolic > diastolic before committing.
+        This works when both values are present on the instance.
+        """
+        # We use getattr to fetch the *other* value dynamically
+        if key == 'systolic':
+            diastolic_val = getattr(self, 'diastolic', None)
+            if diastolic_val is not None and value <= diastolic_val:
+                raise ValueError("Systolic must be greater than diastolic")
+        elif key == 'diastolic':
+            systolic_val = getattr(self, 'systolic', None)
+            if systolic_val is not None and systolic_val <= value:
+                raise ValueError("Systolic must be greater than diastolic")
+        return value
