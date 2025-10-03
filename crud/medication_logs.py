@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from models import MedicationLog, MedicationSchedule, Medication
-from schemas.medication_logs import MedicationLogCreate, MedicationLogUpdate
+from schemas.medication_logs import MedicationLogUpdate
 from datetime import date
 from typing import List
 from sqlalchemy.exc import IntegrityError
@@ -35,9 +35,6 @@ def create_log(db: Session, schedule_id: int, log_data, user_id: int):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Failed to create medication log due to a database constraint.",
         )
-    # db.commit()
-    # db.refresh(log)
-    # return log
 
 def get_log_if_owned(db: Session, log_id: int, user_id: int):
     log = (

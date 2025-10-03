@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 import datetime
 from typing import Optional, List
-from models.sugar_logs import SugarType
+from models.scheduled_sugar_logs import SugarType
 
 class SugarScheduleCreate(BaseModel):
     times: List[datetime.time]

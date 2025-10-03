@@ -9,22 +9,6 @@ from fastapi import HTTPException, status
 def get_user_sugar_schedules(db: Session, user_id: int) -> List[SugarSchedule]:
     return db.query(SugarSchedule).filter_by(user_id=user_id).all()
 
-# def create_sugar_schedule(db: Session, user_id: int, time, duration_days: int, start_date) -> SugarSchedule:
-#     if not start_date:
-#         from datetime import date
-#         start_date = date.today()
-#     end_date = start_date + timedelta(days=duration_days)
-#     schedule = SugarSchedule(
-#         user_id=user_id,
-#         time=time,
-#         duration_days=duration_days,
-#         start_date=start_date,
-#         end_date=end_date
-#     )
-#     db.add(schedule)
-#     db.flush()
-#     return schedule
-
 def create_sugar_schedule(db: Session, user_id: int, payload: SugarScheduleCreate) -> List[SugarSchedule]:
     start_date = payload.start_date or date.today()
     end_date = payload.end_date

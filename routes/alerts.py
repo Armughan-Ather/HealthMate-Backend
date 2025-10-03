@@ -6,11 +6,11 @@ from middlewares.auth import get_current_user
 from models.users import User
 from models.medications import Medication
 from models.medication_schedules import MedicationSchedule
-from models.medication_logs import MedicationLog
+from models.scheduled_medication_logs import ScheduledMedicationLog
 from models.bp_schedules import BloodPressureSchedule
-from models.bp_logs import BloodPressureLog
+from models.scheduled_bp_logs import ScheduledBPLog
 from models.sugar_schedules import SugarSchedule
-from models.sugar_logs import SugarLog
+from models.scheduled_sugar_logs import ScheduledSugarLog
 from models.insights import InsightPeriod
 from typing import List, Dict, Any
 
@@ -46,7 +46,7 @@ def generate_alerts_route(
                 if med.start_date.date() <= day and (not med.end_date or med.end_date.date() >= day):
                     scheduled_dt = datetime.combine(day, sched.time)
                     if scheduled_dt < datetime.now():
-                        log = db.query(MedicationLog).filter_by(medication_schedule_id=sched.id, scheduled_date=day).first()
+                        log = db.query(ScheduledMedicationLog).filter_by(medication_schedule_id=sched.id, scheduled_date=day).first()
                         if not log or not log.taken_at:
                             if day == date.today():
                                 desc = f"You missed your {sched.dosage_instruction or ''} {med_name} dose scheduled at {sched.time.strftime('%I:%M %p')} on {day.strftime('%m/%d/%y')}. Please take it now if within 2 hours."
@@ -69,7 +69,7 @@ def generate_alerts_route(
             if sched.start_date <= day and (not sched.end_date or sched.end_date >= day):
                 scheduled_dt = datetime.combine(day, sched.time)
                 if scheduled_dt < datetime.now():
-                    log = db.query(BloodPressureLog).filter(BloodPressureLog.schedule_id == sched.id, BloodPressureLog.checked_at >= datetime.combine(day, time.min), BloodPressureLog.checked_at <= datetime.combine(day, time.max)).first()
+                    log = db.query(ScheduledBPLog).filter(ScheduledBPLog.schedule_id == sched.id, ScheduledBPLog.checked_at >= datetime.combine(day, time.min), ScheduledBPLog.checked_at <= datetime.combine(day, time.max)).first()
                     if not log:
                         alerts.append({
                             "tag": "REMINDER",
@@ -113,7 +113,7 @@ def generate_alerts_route(
             if sched.start_date <= day and (not sched.end_date or sched.end_date >= day):
                 scheduled_dt = datetime.combine(day, sched.time)
                 if scheduled_dt < datetime.now():
-                    log = db.query(SugarLog).filter(SugarLog.schedule_id == sched.id, SugarLog.checked_at >= datetime.combine(day, time.min), SugarLog.checked_at <= datetime.combine(day, time.max)).first()
+                    log = db.query(ScheduledSugarLog).filter(ScheduledSugarLog.schedule_id == sched.id, ScheduledSugarLog.checked_at >= datetime.combine(day, time.min), ScheduledSugarLog.checked_at <= datetime.combine(day, time.max)).first()
                     if not log:
                         alerts.append({
                             "tag": "REMINDER",

@@ -189,15 +189,6 @@ def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
 
 
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        if user_data.name is not None:
-            user.name = user_data.name
-        db.commit()
-        db.refresh(user)
-    return user
-
-
 def delete_user(db: Session, user_id: int):
     user = db.query(User).filter(User.id == user_id).first()
     if user:
@@ -206,16 +197,16 @@ def delete_user(db: Session, user_id: int):
     return user
 
 
-def add_attendant_email(db: Session, user_id: int, email: str):
-    raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
+# def add_attendant_email(db: Session, user_id: int, email: str):
+#     raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
 
 
-def delete_attendant_email(db: Session, user_id: int, email: str):
-    raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
+# def delete_attendant_email(db: Session, user_id: int, email: str):
+#     raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
 
 
-def update_single_attendant_email(db: Session, user_id: int, old_email: str, new_email: str):
-    raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
+# def update_single_attendant_email(db: Session, user_id: int, old_email: str, new_email: str):
+#     raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
 
 # def send_email_to_attendants(attendant_emails: list[str], subject: str, body: str):
 #     if not attendant_emails:
@@ -234,5 +225,3 @@ def update_single_attendant_email(db: Session, user_id: int, old_email: str, new
 #             failed_emails.append({"email": email, "error": str(e)})
 
 #     return {"sent_to": sent_emails, "failed": failed_emails}
-
-# def update_user(db: Session, user_id: int, user_data: UserUpdate):

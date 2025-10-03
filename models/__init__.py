@@ -10,11 +10,11 @@ from .messages import Message
 from .medicines import Medicine
 from .medications import Medication
 from .medication_schedules import MedicationSchedule
-from .medication_logs import MedicationLog
+from .scheduled_medication_logs import ScheduledMedicationLog
 from .bp_schedules import BloodPressureSchedule
-from .bp_logs import BloodPressureLog
+from .scheduled_bp_logs import ScheduledBPLog
 from .sugar_schedules import SugarSchedule
-from .sugar_logs import SugarLog, SugarType
+from .scheduled_sugar_logs import ScheduledSugarLog, SugarType
 from .insights import Insight, InsightPeriod
 
 # New tables per extended schema
@@ -34,11 +34,11 @@ __all__ = [
     "Medicine",
     "Medication",
     "MedicationSchedule",
-    "MedicationLog",
+    "ScheduledMedicationLog",
     "BloodPressureSchedule",
-    "BloodPressureLog",
+    "ScheduledBPLog",
     "SugarSchedule",
-    "SugarLog",
+    "ScheduledSugarLog",
     "SugarType",
     "Insight",
     "InsightPeriod",

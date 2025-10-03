@@ -1,6 +1,6 @@
 .idea/
 *.iml
-
+temp/
 firebase_temp.json
 firebase.json
 .env

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime, date, time
 from typing import Optional
 from enum import Enum
-from models.sugar_logs import SugarType
+from models.scheduled_sugar_logs import SugarType
 
 class SugarLogBase(BaseModel):
     value: float = Field(..., gt=0, lt=1000)

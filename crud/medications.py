@@ -5,7 +5,7 @@ from models.medications import Medication
 from models.medication_schedules import MedicationSchedule
 from models.medicines import Medicine
 from .medicines import create_medicine
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from sqlalchemy.exc import IntegrityError
 from schemas.medications import MedicationUpdate
 from fastapi import HTTPException, status
 
@@ -81,13 +81,10 @@ def get_user_medications(db: Session, user_id: int) -> List[Medication]:
     """List all medications for a user."""
     return db.query(Medication).filter_by(user_id=user_id).all()
 
-# def normalize_time(t: time) -> time:
-#     return t.replace(second=0, microsecond=0)
-
 
 def normalize_time(t: time) -> time:
-    # Remove seconds, microseconds, and tzinfo for consistent comparison
     return t.replace(second=0, microsecond=0, tzinfo=None)
+
 
 def update_medication(db: Session, medication_id: int, payload: MedicationUpdate) -> Optional[Medication]:
     medication = db.query(Medication).filter_by(id=medication_id).first()
@@ -238,16 +235,3 @@ def delete_medication(db: Session, medication_id: int, user_id: int) -> bool:
         return False
     db.delete(medication)
     return True
-
-
-# def update_medication(db: Session, medication_id: int, payload) -> Optional[Medication]:
-    """Update an existing medication."""
-    medication = db.query(Medication).filter_by(id=medication_id).first()
-    if not medication:
-        return None
-    if payload.purpose is not None:
-        medication.purpose = payload.purpose
-    if payload.duration_days is not None:
-        medication.duration_days = payload.duration_days
-        medication.end_date = medication.start_date + timedelta(days=payload.duration_days)
-    return medication
