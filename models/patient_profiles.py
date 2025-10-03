@@ -70,30 +70,61 @@ class PatientProfile(Base):
                        name='check_sugar_random_min_max_order'),
     )
 
-    @validates('bp_systolic_max')
-    def check_systolic_order(cls, v, values):
-        min_val = values.get('bp_systolic_min')
-        if v is not None and min_val is not None and v <= min_val:
-            raise ValueError('bp_systolic_max must be greater than bp_systolic_min')
-        return v
+    @validates('bp_systolic_min', 'bp_systolic_max')
+    def validate_bp_systolic(self, key, value):
+        if value is not None:
+            if not (70 <= value <= 250):
+                raise ValueError(f"{key} must be between 70 and 250 mmHg")
+        # Also check min < max when either changes
+        if key == 'bp_systolic_min' and self.bp_systolic_max is not None:
+            if value is not None and value >= self.bp_systolic_max:
+                raise ValueError("bp_systolic_min must be less than bp_systolic_max")
+        elif key == 'bp_systolic_max' and self.bp_systolic_min is not None:
+            if value is not None and value <= self.bp_systolic_min:
+                raise ValueError("bp_systolic_max must be greater than bp_systolic_min")
+        return value
 
-    @validates('bp_diastolic_max')
-    def check_diastolic_order(cls, v, values):
-        min_val = values.get('bp_diastolic_min')
-        if v is not None and min_val is not None and v <= min_val:
-            raise ValueError('bp_diastolic_max must be greater than bp_diastolic_min')
-        return v
+    @validates('bp_diastolic_min', 'bp_diastolic_max')
+    def validate_bp_diastolic(self, key, value):
+        if value is not None:
+            if not (40 <= value <= 150):
+                raise ValueError(f"{key} must be between 40 and 150 mmHg")
+        if key == 'bp_diastolic_min' and self.bp_diastolic_max is not None:
+            if value is not None and value >= self.bp_diastolic_max:
+                raise ValueError("bp_diastolic_min must be less than bp_diastolic_max")
+        elif key == 'bp_diastolic_max' and self.bp_diastolic_min is not None:
+            if value is not None and value <= self.bp_diastolic_min:
+                raise ValueError("bp_diastolic_max must be greater than bp_diastolic_min")
+        return value
 
-    @validates('sugar_fasting_max')
-    def check_fasting_order(cls, v, values):
-        min_val = values.get('sugar_fasting_min')
-        if v is not None and min_val is not None and v <= min_val:
-            raise ValueError('sugar_fasting_max must be greater than sugar_fasting_min')
-        return v
+    @validates('sugar_fasting_min', 'sugar_fasting_max')
+    def validate_sugar_fasting(self, key, value):
+        if value is not None:
+            if not (50 <= value <= 300):
+                raise ValueError(f"{key} must be between 50 and 300 mg/dL")
+        if key == 'sugar_fasting_min' and self.sugar_fasting_max is not None:
+            if value is not None and value >= self.sugar_fasting_max:
+                raise ValueError("sugar_fasting_min must be less than sugar_fasting_max")
+        elif key == 'sugar_fasting_max' and self.sugar_fasting_min is not None:
+            if value is not None and value <= self.sugar_fasting_min:
+                raise ValueError("sugar_fasting_max must be greater than sugar_fasting_min")
+        return value
 
-    @validates('sugar_random_max')
-    def check_random_order(cls, v, values):
-        min_val = values.get('sugar_random_min')
-        if v is not None and min_val is not None and v <= min_val:
-            raise ValueError('sugar_random_max must be greater than sugar_random_min')
-        return v
+    @validates('sugar_random_min', 'sugar_random_max')
+    def validate_sugar_random(self, key, value):
+        if value is not None:
+            if not (50 <= value <= 400):
+                raise ValueError(f"{key} must be between 50 and 400 mg/dL")
+        if key == 'sugar_random_min' and self.sugar_random_max is not None:
+            if value is not None and value >= self.sugar_random_max:
+                raise ValueError("sugar_random_min must be less than sugar_random_max")
+        elif key == 'sugar_random_max' and self.sugar_random_min is not None:
+            if value is not None and value <= self.sugar_random_min:
+                raise ValueError("sugar_random_max must be greater than sugar_random_min")
+        return value
+
+    @validates('emergency_contact')
+    def validate_emergency_contact(self, key, value):
+        if value is not None and len(value.strip()) < 10:
+            raise ValueError("Emergency contact must be at least 10 digits")
+        return value

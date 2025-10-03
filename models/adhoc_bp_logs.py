@@ -19,7 +19,7 @@ class AdhocBPLog(Base):
     notes = Column(String(500), nullable=True)
     
     logged_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    checked_at = Column(DateTime(timezone=True), nullable=False)
+    checked_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

@@ -16,7 +16,6 @@ class PatientNote(Base):
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     is_discussed = Column(Boolean, default=False, nullable=False)
-    discussed_at = Column(DateTime(timezone=True), nullable=True)
     
     created_by = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
 
@@ -59,22 +58,3 @@ class PatientNote(Base):
         if len(trimmed) > 10000:
             raise ValueError("Content cannot exceed 10,000 characters")
         return trimmed
-
-    @validates('is_discussed', 'discussed_at')
-    def validate_discussion_fields(self, key, value):
-        """
-        - If is_discussed = False, discussed_at must be None.
-        - If is_discussed = True, discussed_at should not be before created_at.
-        """
-        # We use getattr(self, ...) to access the current state of both fields
-        is_discussed = value if key == 'is_discussed' else getattr(self, 'is_discussed', False)
-        discussed_at = value if key == 'discussed_at' else getattr(self, 'discussed_at', None)
-
-        if not is_discussed and discussed_at is not None:
-            raise ValueError("Cannot set discussed_at when is_discussed is False")
-
-        if is_discussed and discussed_at is not None:
-            now_utc = datetime.now(timezone.utc)
-            if discussed_at > now_utc:
-                raise ValueError("Discussed time cannot be in the future")
-        return value

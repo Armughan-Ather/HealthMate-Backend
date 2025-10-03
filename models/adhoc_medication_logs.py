@@ -14,7 +14,7 @@ class AdhocMedicationLog(Base):
     id = Column(Integer, primary_key=True)
     patient_profile_id = Column(Integer, ForeignKey('patient_profiles.user_id', ondelete='CASCADE'), nullable=False, index=True)
     medicine_id = Column(Integer, ForeignKey('medicines.id'), nullable=False, index=True)
-    dosage_taken = Column(String(100), nullable=False)
+    dosage_taken = Column(String(100), nullable=True)
     notes = Column(String(500), nullable=True)
     
     taken_at = Column(DateTime(timezone=True), nullable=False)

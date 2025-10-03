@@ -13,7 +13,7 @@ class MedicationSchedule(Base):
     id = Column(Integer, primary_key=True)
     medication_id = Column(Integer, ForeignKey('medications.id', ondelete='CASCADE'), nullable=False, index=True)
     scheduled_time = Column(Time, nullable=False)
-    dosage_instruction = Column(String(200), nullable=False)
+    dosage_instruction = Column(String(200), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -45,7 +45,7 @@ class Chat(Base):
     @validates('summary')
     def validate_summary(self, key, value):
         if value is None:
-            return ''
+            return None
         if len(value) > 2000:
             raise ValueError("Chat summary cannot exceed 2000 characters")
         return value
