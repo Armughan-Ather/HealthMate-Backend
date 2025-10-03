@@ -36,6 +36,15 @@ def verify_firebase_token(token: str):
     try:
         decoded_token = firebase_auth.verify_id_token(token)
         return decoded_token
+    except firebase_auth.InvalidIdTokenError:
+        print("Firebase token verification failed: Invalid token")
+        return None
+    except firebase_auth.ExpiredIdTokenError:
+        print("Firebase token verification failed: Token expired")
+        return None
+    except firebase_auth.RevokedIdTokenError:
+        print("Firebase token verification failed: Token revoked")
+        return None
     except Exception as e:
-        print("🔥 Firebase token verification failed:", str(e))
+        print(f"Firebase token verification failed: {str(e)}")
         return None

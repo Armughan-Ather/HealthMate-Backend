@@ -6,19 +6,26 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-firebase_json_str = os.getenv("FIREBASE_JSON_STRING")
+def initialize_firebase():
+    if firebase_admin._apps:
+        return
 
-if firebase_json_str:
-    # Convert the string back to a dictionary
-    firebase_data = json.loads(firebase_json_str)
+    firebase_json_str = os.getenv("FIREBASE_JSON_STRING")
 
-    # Create a temporary file for the credential
-    with open("firebase.json", "w") as f:
-        json.dump(firebase_data, f)
+    if not firebase_json_str:
+        raise ValueError(
+            "FIREBASE_JSON_STRING not found in environment variables. "
+            "Please ensure your .env file contains the Firebase service account credentials."
+        )
 
-    # Initialize Firebase with that temp file
-    if not firebase_admin._apps:
-        cred = credentials.Certificate("firebase.json")
+    try:
+        firebase_credentials = json.loads(firebase_json_str)
+        cred = credentials.Certificate(firebase_credentials)
         firebase_admin.initialize_app(cred)
-else:
-    raise ValueError("FIREBASE_JSON_STRING not found in environment variables")
+        print("Firebase Admin SDK initialized successfully")
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in FIREBASE_JSON_STRING: {str(e)}")
+    except Exception as e:
+        raise ValueError(f"Failed to initialize Firebase: {str(e)}")
+
+initialize_firebase()

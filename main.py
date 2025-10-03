@@ -1,3 +1,4 @@
+import firebase
 import routes
 import models
 from fastapi import FastAPI
