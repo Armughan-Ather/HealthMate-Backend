@@ -5,12 +5,12 @@ from datetime import datetime, date
 
 from middlewares.auth import get_current_user
 from database import get_db
-from schemas.bp_logs import (
-    BloodPressureLogCreate,
-    BloodPressureLogUpdate,
-    BloodPressureLogOut,
+from schemas.scheduled_bp_logs import (
+    ScheduledBPLogCreate,
+    ScheduledBPLogUpdate,
+    ScheduledBPLogResponse,
 )
-from crud.bp_logs import (
+from crud.scheduled_bp_logs import (
     get_active_schedule,
     create_bp_log,
     update_bp_log,
@@ -26,16 +26,16 @@ from models.users import User
 router = APIRouter()
 
 
-@router.post("/{schedule_id}", response_model=BloodPressureLogOut, status_code=status.HTTP_201_CREATED)
-def create_log(schedule_id: int, data: BloodPressureLogCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@router.post("/{schedule_id}", response_model=ScheduledBPLogResponse, status_code=status.HTTP_201_CREATED)
+def create_log(schedule_id: int, data: ScheduledBPLogCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     log = create_bp_log(db, user_id=current_user.id, schedule_id=schedule_id, data=data)
     if not log:
         raise HTTPException(status_code=400, detail="No active schedule found for the provided time.")
     return log
 
 
-@router.put("/logs/{log_id}", response_model=BloodPressureLogOut)
-def update_log(log_id: int, data: BloodPressureLogUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@router.put("/logs/{log_id}", response_model=ScheduledBPLogResponse)
+def update_log(log_id: int, data: ScheduledBPLogUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     log = update_bp_log(db, log_id, data)
     if not log:
         raise HTTPException(status_code=404, detail="Log not found.")
@@ -49,7 +49,7 @@ def delete_log(log_id: int, db: Session = Depends(get_db), current_user: User = 
     return
 
 
-@router.get("/logs/{log_id}", response_model=BloodPressureLogOut)
+@router.get("/logs/{log_id}", response_model=ScheduledBPLogResponse)
 def get_log_by_id(log_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     log = get_log_by_id(db, log_id)
     if not log:
@@ -57,17 +57,17 @@ def get_log_by_id(log_id: int, db: Session = Depends(get_db), current_user: User
     return log
 
 
-@router.get("/schedule/{schedule_id}", response_model=List[BloodPressureLogOut])
+@router.get("/schedule/{schedule_id}", response_model=List[ScheduledBPLogResponse])
 def get_logs_by_schedule(schedule_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return get_logs_by_schedule_id(db, schedule_id)
 
 
-@router.get("/user", response_model=List[BloodPressureLogOut])
+@router.get("/user", response_model=List[ScheduledBPLogResponse])
 def get_logs_by_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return get_logs_by_user_id(db, current_user.id)
 
 
-@router.get("/date", response_model=List[BloodPressureLogOut])
+@router.get("/date", response_model=List[ScheduledBPLogResponse])
 def get_logs_by_date_or_range(
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
@@ -103,9 +103,9 @@ def get_logs_by_date_or_range(
 # from middlewares.auth import get_current_user
 # from database import get_db
 # from schemas.bp_logs import (
-#     BloodPressureLogCreate,
-#     BloodPressureLogUpdate,
-#     BloodPressureLogOut,
+#     ScheduledBPLogCreate,
+#     ScheduledBPLogUpdate,
+#     ScheduledBPLogResponse,
 # )
 # from crud.bp_logs import (
 #     get_active_schedule,
@@ -123,16 +123,16 @@ def get_logs_by_date_or_range(
 # router = APIRouter()
 
 
-# @router.post("/{schedule_id}", response_model=BloodPressureLogOut, status_code=status.HTTP_201_CREATED)
-# def create_log(schedule_id: int, data: BloodPressureLogCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+# @router.post("/{schedule_id}", response_model=ScheduledBPLogResponse, status_code=status.HTTP_201_CREATED)
+# def create_log(schedule_id: int, data: ScheduledBPLogCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 #     log = create_bp_log(db, user_id=current_user.id, schedule_id=schedule_id, data=data)
 #     if not log:
 #         raise HTTPException(status_code=400, detail="No active schedule found for the provided time.")
 #     return log
 
 
-# @router.put("/logs/{log_id}", response_model=BloodPressureLogOut)
-# def update_log(log_id: int, data: BloodPressureLogUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+# @router.put("/logs/{log_id}", response_model=ScheduledBPLogResponse)
+# def update_log(log_id: int, data: ScheduledBPLogUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 #     log = update_bp_log(db, log_id, data)
 #     if not log:
 #         raise HTTPException(status_code=404, detail="Log not found.")
@@ -146,7 +146,7 @@ def get_logs_by_date_or_range(
 #     return
 
 
-# @router.get("/logs/{log_id}", response_model=BloodPressureLogOut)
+# @router.get("/logs/{log_id}", response_model=ScheduledBPLogResponse)
 # def get_log_by_id(log_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 #     log = get_log_by_id(db, log_id)
 #     if not log:
@@ -154,17 +154,17 @@ def get_logs_by_date_or_range(
 #     return log
 
 
-# @router.get("/schedule/{schedule_id}", response_model=List[BloodPressureLogOut])
+# @router.get("/schedule/{schedule_id}", response_model=List[ScheduledBPLogResponse])
 # def get_logs_by_schedule(schedule_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 #     return get_logs_by_schedule_id(db, schedule_id)
 
 
-# @router.get("/user", response_model=List[BloodPressureLogOut])
+# @router.get("/user", response_model=List[ScheduledBPLogResponse])
 # def get_logs_by_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 #     return get_logs_by_user_id(db, current_user.id)
 
 
-# @router.get("/date", response_model=List[BloodPressureLogOut])
+# @router.get("/date", response_model=List[ScheduledBPLogResponse])
 # def get_logs_by_date_or_range(
 #     date_from: Optional[date] = Query(None),
 #     date_to: Optional[date] = Query(None),

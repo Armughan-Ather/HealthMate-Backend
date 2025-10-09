@@ -5,7 +5,7 @@ from datetime import date
 
 from database import get_db
 from models.users import User
-from crud.sugar_logs import (
+from crud.scheduled_sugar_logs import (
     create_sugar_log,
     get_sugar_log_by_id,
     get_sugar_logs_by_schedule,
@@ -15,7 +15,7 @@ from crud.sugar_logs import (
     update_sugar_log,
     delete_sugar_log
 )
-from schemas.sugar_logs import SugarLogCreate, SugarLogUpdate, SugarLogOut
+from schemas.scheduled_sugar_logs import SugarLogCreate, SugarLogUpdate, SugarLogOut
 from middlewares.auth import get_current_user
 
 router = APIRouter()

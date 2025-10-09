@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 import json
 import re
 from models.insights import Insight, InsightPeriod
-from crud.bp_logs import get_logs_by_date as get_bp_logs
-from crud.sugar_logs import get_sugar_logs_by_date
-from crud.medication_logs import get_logs_by_date as get_med_logs
+from crud.scheduled_bp_logs import get_logs_by_date as get_bp_logs
+from crud.scheduled_sugar_logs import get_sugar_logs_by_date
+from crud.scheduled_medication_logs import get_logs_by_date as get_med_logs
 from crud.bp_schedules import get_user_bp_schedules
 from crud.sugar_schedules import get_user_sugar_schedules
 from crud.medications import get_user_medications
@@ -99,9 +99,9 @@ def generate_insight(db: Session, user_id: int, period: InsightPeriod, start_dat
         med_logs = get_med_logs(db, user_id, start_date)
     else:
         # Use date range functions for weekly/monthly
-        from crud.bp_logs import get_logs_by_date_range as get_bp_logs_by_range
-        from crud.sugar_logs import get_sugar_logs_by_date_range as get_sugar_logs_by_range
-        from crud.medication_logs import get_logs_by_date_range as get_med_logs_by_range
+        from crud.scheduled_bp_logs import get_logs_by_date_range as get_bp_logs_by_range
+        from crud.scheduled_sugar_logs import get_sugar_logs_by_date_range as get_sugar_logs_by_range
+        from crud.scheduled_medication_logs import get_logs_by_date_range as get_med_logs_by_range
         # For BP logs, use datetime range
         bp_logs = get_bp_logs_by_range(db, user_id, datetime.combine(start_date, datetime.min.time()), datetime.combine(end_date, datetime.max.time()))
         sugar_logs = get_sugar_logs_by_range(db, user_id, start_date, end_date)

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from models import MedicationLog, MedicationSchedule, Medication
-from schemas.medication_logs import MedicationLogUpdate
+from schemas.scheduled_medication_logs import MedicationLogUpdate
 from datetime import date
 from typing import List
 from sqlalchemy.exc import IntegrityError

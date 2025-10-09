@@ -7,9 +7,9 @@ from routes.medications import router as medications_router
 from routes.medication_schedules import router as medication_schedules_router
 from routes.bp_schedules import router as bp_schedules_router
 from routes.sugar_schedules import router as sugar_schedules_router
-from routes.medication_logs import router as medication_logs_router
-from routes.bp_logs import router as bp_logs_router
-from routes.sugar_logs import router as sugar_logs_router
+from routes.scheduled_medication_logs import router as medication_logs_router
+from routes.scheduled_bp_logs import router as bp_logs_router
+from routes.scheduled_sugar_logs import router as sugar_logs_router
 from routes.insights import router as insights_router
 from routes.alerts import router as alerts_router
 from routes.reports import router as reports_router

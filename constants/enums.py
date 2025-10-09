@@ -1,6 +1,17 @@
 import enum
 
-class RoleEnum(enum.Enum):
+class ReminderTagEnum(enum.Enum):
+    APPOINTMENT = "APPOINTMENT"
+    WATER = "WATER"
+    EXERCISE = "EXERCISE"
+    SLEEP = "SLEEP"
+    MEAL = "MEAL"
+    LAB_TEST = "LAB_TEST"
+    THERAPY = "THERAPY"
+    VACCINATION = "VACCINATION"
+
+
+class UserRoleEnum(enum.Enum):
     PATIENT = "PATIENT"
     DOCTOR = "DOCTOR"
     ATTENDANT = "ATTENDANT"

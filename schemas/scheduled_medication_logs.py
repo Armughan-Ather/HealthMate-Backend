@@ -33,6 +33,7 @@ class MedicationLogBase(BaseModel):
     scheduled_date: date
     taken_at: Optional[datetime] = None
     notes: Optional[str] = None
+    logged_by: Optional[int] = None
 
 class MedicationLogCreate(MedicationLogBase):
     pass
