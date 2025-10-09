@@ -13,9 +13,11 @@ class MedicationScheduleUpdate(BaseModel):
 class MedicationScheduleResponse(BaseModel):
     id: int
     medication_id: int
-    time: datetime.time
+    scheduled_time: datetime.time
     dosage_instruction: Optional[str]
     is_active: bool
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
 
     class Config:
         from_attributes = True

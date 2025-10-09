@@ -5,7 +5,7 @@ from datetime import datetime, date
 
 from models.scheduled_sugar_logs import ScheduledSugarLog
 from models.sugar_schedules import SugarSchedule
-from schemas.sugar_logs import SugarLogCreate, SugarLogUpdate
+from schemas.scheduled_sugar_logs import SugarLogCreate, SugarLogUpdate
 
 def create_sugar_log(db: Session, user_id: int, schedule_id: int, data: SugarLogCreate) -> ScheduledSugarLog:
     if schedule_id:

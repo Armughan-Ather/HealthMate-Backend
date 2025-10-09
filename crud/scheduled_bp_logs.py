@@ -3,28 +3,28 @@ from typing import Optional, List
 from datetime import datetime, date
 
 from models.scheduled_bp_logs import ScheduledBPLog
-from models.bp_schedules import BloodPressureSchedule
-from schemas.bp_logs import BloodPressureLogCreate, BloodPressureLogUpdate
+from models.bp_schedules import BPSchedule
+from schemas.scheduled_bp_logs import ScheduledBPLogCreate, ScheduledBPLogUpdate
 
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 
-def get_active_schedule(db: Session, user_id: int, checked_date: date) -> Optional[BloodPressureSchedule]:
-    return db.query(BloodPressureSchedule).filter(
-        BloodPressureSchedule.user_id == user_id,
-        BloodPressureSchedule.is_active == True,
-        BloodPressureSchedule.start_date <= checked_date,
-        (BloodPressureSchedule.end_date == None) | (BloodPressureSchedule.end_date >= checked_date)
+def get_active_schedule(db: Session, user_id: int, checked_date: date) -> Optional[BPSchedule]:
+    return db.query(BPSchedule).filter(
+        BPSchedule.user_id == user_id,
+        BPSchedule.is_active == True,
+        BPSchedule.start_date <= checked_date,
+        (BPSchedule.end_date == None) | (BPSchedule.end_date >= checked_date)
     ).first()
 
 
-def create_bp_log(db: Session, user_id: int, schedule_id: int, data: BloodPressureLogCreate) -> Optional[ScheduledBPLog]:
+def create_bp_log(db: Session, user_id: int, schedule_id: int, data: ScheduledBPLogCreate) -> Optional[ScheduledBPLog]:
     checked_at = data.checked_at or datetime.utcnow()
     checked_date = checked_at.date()
 
-    schedule = db.query(BloodPressureSchedule).filter(
-        BloodPressureSchedule.id == schedule_id,
-        BloodPressureSchedule.user_id == user_id
+    schedule = db.query(BPSchedule).filter(
+        BPSchedule.id == schedule_id,
+        BPSchedule.user_id == user_id
     ).first()
 
     if not schedule:
@@ -80,7 +80,7 @@ def create_bp_log(db: Session, user_id: int, schedule_id: int, data: BloodPressu
         )
 
 
-def update_bp_log(db: Session, log_id: int, data: BloodPressureLogUpdate) -> Optional[ScheduledBPLog]:
+def update_bp_log(db: Session, log_id: int, data: ScheduledBPLogUpdate) -> Optional[ScheduledBPLog]:
     log = db.query(ScheduledBPLog).filter(ScheduledBPLog.id == log_id).first()
     if not log:
         return None
@@ -112,15 +112,15 @@ def get_logs_by_schedule_id(db: Session, schedule_id: int) -> List[ScheduledBPLo
 
 
 def get_logs_by_user_id(db: Session, user_id: int) -> List[ScheduledBPLog]:
-    return db.query(ScheduledBPLog).join(BloodPressureSchedule).filter(
-        BloodPressureSchedule.user_id == user_id
+    return db.query(ScheduledBPLog).join(BPSchedule).filter(
+        BPSchedule.user_id == user_id
     ).order_by(ScheduledBPLog.checked_at.desc()).all()
 
 def get_recent_bp_logs(db: Session, user_id: int, limit: int = 4) -> List[ScheduledBPLog]:
     return (
         db.query(ScheduledBPLog)
-        .join(BloodPressureSchedule)
-        .filter(BloodPressureSchedule.user_id == user_id)
+        .join(BPSchedule)
+        .filter(BPSchedule.user_id == user_id)
         .order_by(ScheduledBPLog.checked_at.desc())
         .limit(limit)
         .all()
@@ -131,8 +131,8 @@ def get_logs_by_date_range(db: Session, user_id: int, start_date: date, end_date
     start_dt = datetime.combine(start_date, datetime.min.time())
     end_dt = datetime.combine(end_date, datetime.max.time())
     
-    return db.query(ScheduledBPLog).join(BloodPressureSchedule).filter(
-        BloodPressureSchedule.user_id == user_id,
+    return db.query(ScheduledBPLog).join(BPSchedule).filter(
+        BPSchedule.user_id == user_id,
         ScheduledBPLog.checked_at >= start_dt,
         ScheduledBPLog.checked_at <= end_dt
     ).order_by(ScheduledBPLog.checked_at.desc()).all()
@@ -142,8 +142,8 @@ def get_logs_by_date(db: Session, user_id: int, target_date: date) -> List[Sched
     start_dt = datetime.combine(target_date, datetime.min.time())
     end_dt = datetime.combine(target_date, datetime.max.time())
 
-    return db.query(ScheduledBPLog).join(BloodPressureSchedule).filter(
-        BloodPressureSchedule.user_id == user_id,
+    return db.query(ScheduledBPLog).join(BPSchedule).filter(
+        BPSchedule.user_id == user_id,
         ScheduledBPLog.checked_at >= start_dt,
         ScheduledBPLog.checked_at <= end_dt
     ).order_by(ScheduledBPLog.checked_at.desc()).all()

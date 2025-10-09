@@ -14,7 +14,7 @@ class MedicineResponse(BaseModel):
     strength: str
     form: str
     generic_name: Optional[str] = None
-    is_active: bool
+    created_at: Optional[str] = None
 
     class Config:
         from_attributes = True

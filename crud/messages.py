@@ -8,8 +8,8 @@ from typing import Tuple
 
 from models.messages import Message
 from crud.chats import get_chat_summary
-from crud.bp_logs import get_recent_bp_logs
-from crud.sugar_logs import get_recent_sugar_logs
+from crud.scheduled_bp_logs import get_recent_bp_logs
+from crud.scheduled_sugar_logs import get_recent_sugar_logs
 from crud.medications import get_user_medicines
 
 from schemas.messages import MessageCreate, MessagePair

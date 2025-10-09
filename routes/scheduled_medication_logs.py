@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas.medication_logs import (
+from schemas.scheduled_medication_logs import (
     MedicationLogCreate,
     MedicationLogUpdate,
     MedicationLogResponse
 )
-from crud.medication_logs import (
+from crud.scheduled_medication_logs import (
     create_log,
     get_log_if_owned,
     get_logs_by_schedule_id,

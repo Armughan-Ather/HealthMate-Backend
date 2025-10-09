@@ -1,7 +1,6 @@
-from enum import Enum
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import Optional
 
 
 class ResetPasswordRequest(BaseModel):
@@ -28,66 +27,39 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: Optional[str] = None  # Optional for Firebase users
-    google_firebase_uid: Optional[str] = None  # Store Firebase UID if applicable
-    microsoft_firebase_uid: Optional[str] = None  # Store Firebase UID if applicable
+    password: Optional[str] = None
+    google_firebase_uid: Optional[str] = None
+    microsoft_firebase_uid: Optional[str] = None
 
     phone: Optional[str] = None
     address: Optional[str] = None
-
-    bp_systolic_min: Optional[int] = None
-    bp_systolic_max: Optional[int] = None
-    bp_diastolic_min: Optional[int] = None
-    bp_diastolic_max: Optional[int] = None
-    
-    sugar_fasting_min: Optional[int] = None
-    sugar_fasting_max: Optional[int] = None
-
-    sugar_random_min: Optional[int] = None
-    sugar_random_max: Optional[int] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
 
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
-
     phone: Optional[str] = None
     address: Optional[str] = None
     is_active: Optional[bool] = None
 
-    bp_systolic_min: Optional[int]
-    bp_systolic_max: Optional[int]
-    bp_diastolic_min: Optional[int]
-    bp_diastolic_max: Optional[int]
-    
-    sugar_fasting_min: Optional[int]
-    sugar_fasting_max: Optional[int]
-
-    sugar_random_min: Optional[int]
-    sugar_random_max: Optional[int]
-
 
 class UserLogin(BaseModel):
     email: Optional[EmailStr] = None
-    password: Optional[str] = None  # Optional for Firebase users
-    firebase_token: Optional[str] = None  # Store Firebase UID if applicable
+    password: Optional[str] = None
+    firebase_token: Optional[str] = None
 
 
 class UserResponse(UserBase):
+    id: int
     phone: Optional[str] = None
     address: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    google_firebase_uid: Optional[str] = None
+    microsoft_firebase_uid: Optional[str] = None
+    email_verified: bool
     is_active: bool
-
-    # Thresholds
-    bp_systolic_min: Optional[int] = None
-    bp_systolic_max: Optional[int] = None
-    bp_diastolic_min: Optional[int] = None
-    bp_diastolic_max: Optional[int] = None
-
-    sugar_fasting_min: Optional[int] = None
-    sugar_fasting_max: Optional[int] = None
-    sugar_random_min: Optional[int] = None
-    sugar_random_max: Optional[int] = None
-    
     created_at: datetime
     updated_at: datetime
 

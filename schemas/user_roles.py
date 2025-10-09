@@ -1,22 +1,20 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from constants.enums import UserRoleEnum
 
-class RoleBase(BaseModel):
-    name: str
-    description: Optional[str] = None
+class UserRoleBase(BaseModel):
+    user_id: int
+    role: UserRoleEnum
 
-class RoleCreate(RoleBase):
+
+class UserRoleCreate(UserRoleBase):
     pass
 
-class RoleUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
 
-class RoleResponse(RoleBase):
+class UserRoleResponse(UserRoleBase):
     id: int
     created_at: datetime
-    updated_at: datetime
 
     class Config:
         from_attributes = True

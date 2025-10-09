@@ -1,29 +1,30 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import datetime
 from typing import Optional, List
-from models.scheduled_sugar_logs import SugarType
+from constants.enums import SugarTypeEnum
 
 class SugarScheduleCreate(BaseModel):
-    times: List[datetime.time]
-    sugar_type: SugarType
+    scheduled_times: List[datetime.time]
+    sugar_type: SugarTypeEnum
     start_date: Optional[datetime.date]
-    end_date: datetime.date
+    duration_days: Optional[int] = None
 
 class SugarScheduleUpdate(BaseModel):
-    time: Optional[datetime.time] = None
+    scheduled_time: Optional[datetime.time] = None
     start_date: Optional[datetime.date] = None
-    end_date: Optional[datetime.date] = None
+    duration_days: Optional[int] = None
     is_active: Optional[bool] = None
+
 
 class SugarScheduleResponse(BaseModel):
     id: int
-    user_id: int
-    time: datetime.time
-    sugar_type: SugarType
-    duration_days: int
+    patient_profile_id: int
+    scheduled_time: datetime.time
+    sugar_type: Optional[SugarTypeEnum]
+    duration_days: Optional[int]
     start_date: datetime.date
-    end_date: Optional[datetime.date]
     is_active: bool
+    created_by: int
     created_at: datetime.datetime
     updated_at: datetime.datetime
 
