@@ -29,8 +29,8 @@ class WeightLog(Base):
     logger = relationship("User", back_populates="logged_weights")
     
     __table_args__ = (
-        CheckConstraint('weight > 0 AND weight < 1000', name='check_weight_positive'),
-        CheckConstraint("checked_at >= TIMESTAMP('2000-01-01')", name='check_weight_checked_at_reasonable'),
+        CheckConstraint("weight > 0 AND weight < 1000", name='check_weight_positive'),
+        CheckConstraint("checked_at >= TIMESTAMP '2000-01-01'", name='check_weight_checked_at_reasonable'),
         CheckConstraint("checked_at <= CURRENT_TIMESTAMP + INTERVAL '1 day'", name='check_weight_checked_at_not_future'),
         Index('idx_weight_log_patient_checked', 'patient_profile_id', 'checked_at'),
     )
@@ -39,14 +39,6 @@ class WeightLog(Base):
     def validate_patient_profile_id(self, key, value):
         if value is None or value <= 0:
             raise ValueError("patient_profile_id must be a valid positive integer")
-        return value
-
-    @validates('unit')
-    def validate_unit(self, key, value):
-        if value is None:
-            raise ValueError("Weight unit is required")
-        if not isinstance(value, WeightUnitEnum):
-            raise ValueError("Invalid weight unit")
         return value
 
     @validates('weight', 'unit')
@@ -63,7 +55,9 @@ class WeightLog(Base):
         if weight is None or unit is None:
             return value
 
-        # Realistic weight ranges
+        if not isinstance(weight, WeightUnitEnum):
+            raise ValueError("Invalid weight unit")
+
         if unit == WeightUnitEnum.KG:
             if weight < 2 or weight > 500:
                 raise ValueError("Weight must be between 2 kg and 500 kg")

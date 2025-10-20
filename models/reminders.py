@@ -34,12 +34,12 @@ class Reminder(Base):
     creator = relationship("User", back_populates="created_reminders")
     
     __table_args__ = (
-        CheckConstraint('duration_days IS NULL OR duration_days > 0', name='check_reminder_positive_duration'),
-        CheckConstraint('duration_days IS NULL OR duration_days <= 3650', name='check_reminder_max_duration'),
+        CheckConstraint("duration_days IS NULL OR duration_days > 0", name='check_reminder_positive_duration'),
+        CheckConstraint("duration_days IS NULL OR duration_days <= 3650", name='check_reminder_max_duration'),
         CheckConstraint("LENGTH(TRIM(topic)) >= 3", name='check_topic_min_length'),
         CheckConstraint("LENGTH(topic) <= 200", name='check_topic_max_length'),
         CheckConstraint("LENGTH(TRIM(tags)) >= 2", name='check_tags_min_length'),
-        CheckConstraint('start_date >= DATE("2000-01-01")', name='check_reminder_reasonable_start_date'),
+        CheckConstraint("start_date >= DATE '2000-01-01'", name='check_reminder_reasonable_start_date'),
         CheckConstraint(
             "(frequency = 'DAILY' AND custom_days IS NULL) OR "
             "(frequency = 'WEEKLY' AND custom_days IS NOT NULL) OR "
@@ -51,7 +51,7 @@ class Reminder(Base):
         Index('idx_reminder_start_date', 'start_date'),
     )
 
-    @validates('custom_days', always=True)
+    @validates('custom_days')
     def validate_frequency_and_custom_days(cls, v, values):
         freq = values.get('frequency')
         if freq == FrequencyEnum.DAILY:

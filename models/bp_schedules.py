@@ -35,7 +35,7 @@ class BPSchedule(Base):
     __table_args__ = (
         CheckConstraint('duration_days IS NULL OR duration_days > 0', name='check_bp_positive_duration'),
         CheckConstraint('duration_days IS NULL OR duration_days <= 3650', name='check_bp_max_duration'),
-        CheckConstraint('start_date >= DATE("2000-01-01")', name='check_bp_reasonable_start_date'),
+        CheckConstraint("start_date >= DATE '2000-01-01'", name='check_bp_reasonable_start_date'),
         CheckConstraint(
             "(frequency = 'DAILY' AND custom_days IS NULL) OR "
             "(frequency = 'WEEKLY' AND custom_days IS NOT NULL) OR "

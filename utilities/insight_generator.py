@@ -2,11 +2,12 @@ from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 import json
 import re
-from models.insights import Insight, InsightPeriod
+from models.insights import Insight
+from constants.enums import InsightPeriodEnum
 from crud.scheduled_bp_logs import get_logs_by_date as get_bp_logs
 from crud.scheduled_sugar_logs import get_sugar_logs_by_date
 from crud.scheduled_medication_logs import get_logs_by_date as get_med_logs
-from crud.bp_schedules import get_user_bp_schedules
+from crud.bp_schedules import get_patient_bp_schedules
 from crud.sugar_schedules import get_user_sugar_schedules
 from crud.medications import get_user_medications
 from utilities.gemini_client import generate_gemini_response
@@ -72,17 +73,17 @@ Remember to provide insights relevant to managing chronic conditions.
 """
 
 
-def generate_insight(db: Session, user_id: int, period: InsightPeriod, start_date: date):
+def generate_insight(db: Session, user_id: int, period: InsightPeriodEnum, start_date: date):
     """
     Generates a health insight for a user for the given period (daily, weekly, monthly), returns the parsed data (does NOT save to DB).
     The end_date is calculated based on the period.
     """
     # Calculate end_date based on period
-    if period == InsightPeriod.DAILY:
+    if period == InsightPeriodEnum.DAILY:
         end_date = start_date
-    elif period == InsightPeriod.WEEKLY:
+    elif period == InsightPeriodEnum.WEEKLY:
         end_date = start_date + timedelta(days=6)
-    elif period == InsightPeriod.MONTHLY:
+    elif period == InsightPeriodEnum.MONTHLY:
         # Get last day of the month
         if start_date.month == 12:
             end_date = start_date.replace(year=start_date.year + 1, month=1, day=1) - timedelta(days=1)
@@ -93,7 +94,7 @@ def generate_insight(db: Session, user_id: int, period: InsightPeriod, start_dat
 
 
     # Fetch logs for the period
-    if period == InsightPeriod.DAILY:
+    if period == InsightPeriodEnum.DAILY:
         bp_logs = get_bp_logs(db, user_id, start_date)
         sugar_logs = get_sugar_logs_by_date(db, user_id, start_date)
         med_logs = get_med_logs(db, user_id, start_date)
@@ -108,7 +109,7 @@ def generate_insight(db: Session, user_id: int, period: InsightPeriod, start_dat
         med_logs = get_med_logs_by_range(db, user_id, start_date, end_date)
 
     # Schedules logic remains unchanged
-    bp_schedules = get_user_bp_schedules(db, user_id)
+    bp_schedules = get_patient_bp_schedules(db, user_id)
     sugar_schedules = get_user_sugar_schedules(db, user_id)
     medications = get_user_medications(db, user_id)
 
@@ -312,7 +313,7 @@ def save_insight_to_db(db, user_id, period, start_date, end_date, title, summary
         return None
 
 # New function to generate and save
-def generate_and_save_insight(db: Session, user_id: int, period: InsightPeriod, start_date: date):
+def generate_and_save_insight(db: Session, user_id: int, period: InsightPeriodEnum, start_date: date):
     """
     Calls generate_daily_insight, then saves the result to the database if generation succeeded.
     Returns the saved Insight object or None.

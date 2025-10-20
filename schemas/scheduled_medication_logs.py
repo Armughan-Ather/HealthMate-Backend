@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime, time
+from datetime import datetime, time, date
 from typing import Optional
 
 # Nested schemas

@@ -27,8 +27,8 @@ class Insight(Base):
     patient = relationship("PatientProfile", back_populates="insights")
     
     __table_args__ = (
-        CheckConstraint('end_date >= start_date', name='check_insight_date_order'),
-        CheckConstraint('start_date >= DATE("2000-01-01")', name='check_insight_reasonable_start_date'),
+        CheckConstraint("end_date >= start_date", name='check_insight_date_order'),
+        CheckConstraint("start_date >= DATE '2000-01-01'", name='check_insight_reasonable_start_date'),
         CheckConstraint("LENGTH(TRIM(title)) >= 5", name='check_insight_title_min_length'),
         CheckConstraint("LENGTH(title) <= 200", name='check_insight_title_max_length'),
         CheckConstraint("LENGTH(TRIM(summary)) >= 10", name='check_insight_summary_min_length'),

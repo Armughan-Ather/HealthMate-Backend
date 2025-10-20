@@ -15,7 +15,7 @@ class Message(Base):
     chat_id = Column(Integer, ForeignKey('chats.id', ondelete='CASCADE'), nullable=False, index=True)
     request = Column(Text, nullable=False)
     response = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    # metadata = Column(JSON, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

@@ -32,7 +32,7 @@ class ScheduledBPLog(Base):
         CheckConstraint('diastolic >= 30 AND diastolic <= 200', name='check_scheduled_bp_diastolic_range'),
         CheckConstraint('pulse IS NULL OR (pulse >= 30 AND pulse <= 250)', name='check_scheduled_bp_pulse_range'),
         CheckConstraint('systolic > diastolic', name='check_scheduled_bp_systolic_greater'),
-        CheckConstraint("checked_at >= TIMESTAMP('2000-01-01')", name='check_scheduled_bp_checked_at_reasonable'),
+        CheckConstraint("checked_at >= TIMESTAMP '2000-01-01'", name='check_scheduled_bp_checked_at_reasonable'),
         CheckConstraint("checked_at <= CURRENT_TIMESTAMP + INTERVAL '1 day'", name='check_scheduled_bp_checked_at_not_future'),
         Index('idx_scheduled_bp_log_checked_at', 'checked_at'),
         Index('idx_scheduled_bp_log_schedule', 'schedule_id', 'checked_at'),

@@ -5,7 +5,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 from database import Base
-from constants.enums import RoleEnum
+from constants.enums import UserRoleEnum
 
 
 class UserRole(Base):
@@ -13,7 +13,7 @@ class UserRole(Base):
     
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
-    role = Column(Enum(RoleEnum), nullable=False)
+    role = Column(Enum(UserRoleEnum), nullable=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
@@ -37,6 +37,6 @@ class UserRole(Base):
     def validate_role(self, key, value):
         if value is None:
             raise ValueError("role is required")
-        if not isinstance(value, RoleEnum):
+        if not isinstance(value, UserRoleEnum):
             raise ValueError("Invalid role value")
         return value

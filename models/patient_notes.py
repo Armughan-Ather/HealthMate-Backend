@@ -31,9 +31,6 @@ class PatientNote(Base):
         CheckConstraint("LENGTH(title) <= 200", name='check_note_title_max_length'),
         CheckConstraint("LENGTH(TRIM(content)) >= 5", name='check_note_content_min_length'),
         CheckConstraint("LENGTH(content) <= 10000", name='check_note_content_max_length'),
-        CheckConstraint("(is_discussed = FALSE AND discussed_at IS NULL) OR (is_discussed = TRUE)", 
-                       name='check_note_discussed_consistency'),
-        CheckConstraint("discussed_at IS NULL OR discussed_at >= created_at", name='check_note_discussed_after_creation'),
         Index('idx_patient_note_patient_discussed', 'patient_profile_id', 'is_discussed'),
     )
 

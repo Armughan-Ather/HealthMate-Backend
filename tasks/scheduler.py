@@ -5,19 +5,19 @@ from database import SessionLocal
 from models.users import User
 from pytz import timezone
 from utilities.insight_generator import generate_and_save_insight
-from models.insights import InsightPeriod
+from constants.enums import InsightPeriodEnum
 
-def generate_insights(period: InsightPeriod):
+def generate_insights(period: InsightPeriodEnum):
     db: Session = SessionLocal()
     try:
         today = date.today()
-        if period == InsightPeriod.DAILY:
+        if period == InsightPeriodEnum.DAILY:
             start_date = today - timedelta(days=1)  # Previous day
-        elif period == InsightPeriod.WEEKLY:
+        elif period == InsightPeriodEnum.WEEKLY:
             # Previous week: Monday to Sunday
             last_monday = today - timedelta(days=today.weekday() + 7)
             start_date = last_monday
-        elif period == InsightPeriod.MONTHLY:
+        elif period == InsightPeriodEnum.MONTHLY:
             # Previous month: 1st to last day
             first_of_this_month = today.replace(day=1)
             last_month_end = first_of_this_month - timedelta(days=1)
@@ -41,7 +41,7 @@ def start_scheduler():
     scheduler = BackgroundScheduler()
     # Daily: every day at midnight
     scheduler.add_job(
-        lambda: generate_insights(InsightPeriod.DAILY),
+        lambda: generate_insights(InsightPeriodEnum.DAILY),
         "cron",
         hour=0,
         minute=0,
@@ -49,7 +49,7 @@ def start_scheduler():
     )
     # Weekly: every Monday at 1:00 AM (for previous week)
     scheduler.add_job(
-        lambda: generate_insights(InsightPeriod.WEEKLY),
+        lambda: generate_insights(InsightPeriodEnum.WEEKLY),
         "cron",
         day_of_week="mon",
         hour=1,
@@ -58,7 +58,7 @@ def start_scheduler():
     )
     # Monthly: 1st of each month at 2:00 AM (for previous month)
     scheduler.add_job(
-        lambda: generate_insights(InsightPeriod.MONTHLY),
+        lambda: generate_insights(InsightPeriodEnum.MONTHLY),
         "cron",
         day=1,
         hour=2,

@@ -7,11 +7,11 @@ from models.users import User
 from models.medications import Medication
 from models.medication_schedules import MedicationSchedule
 from models.scheduled_medication_logs import ScheduledMedicationLog
-from models.bp_schedules import BloodPressureSchedule
+from models.bp_schedules import BPSchedule
 from models.scheduled_bp_logs import ScheduledBPLog
 from models.sugar_schedules import SugarSchedule
 from models.scheduled_sugar_logs import ScheduledSugarLog
-from models.insights import InsightPeriod
+from constants.enums import InsightPeriodEnum
 from typing import List, Dict, Any
 
 router = APIRouter()
@@ -20,14 +20,14 @@ router = APIRouter()
 def generate_alerts_route(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    period: InsightPeriod = Query(InsightPeriod.DAILY, description="Alert period: daily, weekly, or monthly"),
+    period: InsightPeriodEnum = Query(InsightPeriodEnum.DAILY, description="Alert period: daily, weekly, or monthly"),
     start_date: date = Query(date.today(), description="Start date for the alert period (defaults to today)")
 ):
-    if period == InsightPeriod.DAILY:
+    if period == InsightPeriodEnum.DAILY:
         end_date = start_date
-    elif period == InsightPeriod.WEEKLY:
+    elif period == InsightPeriodEnum.WEEKLY:
         end_date = start_date + timedelta(days=6)
-    elif period == InsightPeriod.MONTHLY:
+    elif period == InsightPeriodEnum.MONTHLY:
         if start_date.month == 12:
             end_date = start_date.replace(year=start_date.year + 1, month=1, day=1) - timedelta(days=1)
         else:
@@ -62,7 +62,7 @@ def generate_alerts_route(
                 day += timedelta(days=1)
 
     # --- BP Missed Check & Out-of-Range Alerts ---
-    bp_schedules = db.query(BloodPressureSchedule).filter(BloodPressureSchedule.user_id == current_user.id, BloodPressureSchedule.is_active == True).all()
+    bp_schedules = db.query(BPSchedule).filter(BPSchedule.user_id == current_user.id, BPSchedule.is_active == True).all()
     for sched in bp_schedules:
         day = start_date
         while day <= end_date:

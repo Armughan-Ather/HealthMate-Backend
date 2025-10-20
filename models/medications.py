@@ -36,7 +36,7 @@ class Medication(Base):
     __table_args__ = (
         CheckConstraint('duration_days IS NULL OR duration_days > 0', name='check_medication_positive_duration'),
         CheckConstraint('duration_days IS NULL OR duration_days <= 3650', name='check_medication_max_duration'),  # 10 years max
-        CheckConstraint('start_date >= DATE("2000-01-01")', name='check_medication_reasonable_start_date'),
+        CheckConstraint("start_date >= DATE '2000-01-01'", name="check_medication_reasonable_start_date"),
         CheckConstraint(
             "(frequency = 'DAILY' AND custom_days IS NULL) OR "
             "(frequency = 'WEEKLY' AND custom_days IS NOT NULL) OR "

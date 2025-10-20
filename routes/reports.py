@@ -7,11 +7,11 @@ from models.users import User
 from models.medications import Medication
 from models.medication_schedules import MedicationSchedule
 from models.scheduled_medication_logs import ScheduledMedicationLog
-from models.bp_schedules import BloodPressureSchedule
+from models.bp_schedules import BPSchedule
 from models.scheduled_bp_logs import ScheduledBPLog
 from models.sugar_schedules import SugarSchedule
 from models.scheduled_sugar_logs import ScheduledSugarLog
-from models.insights import InsightPeriod
+from constants.enums import InsightPeriodEnum
 from typing import List, Dict, Any
 import io
 import matplotlib
@@ -349,7 +349,7 @@ def generate_pdf_report(user: User, bp_logs, sugar_logs, adherence_data, adheren
 def generate_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    period: InsightPeriod = Query(InsightPeriod.DAILY, description="Report period: daily, weekly, or monthly"),
+    period: InsightPeriodEnum = Query(InsightPeriodEnum.DAILY, description="Report period: daily, weekly, or monthly"),
     start_date: date = Query(None, description="Optional start date override (if not provided, automatically calculated based on period)")
 ):
     """Generate comprehensive health report with adherence data and charts"""
@@ -359,24 +359,24 @@ def generate_report(
     
     if start_date is None:
         # Auto-calculate start_date based on period (matching frontend logic)
-        if period == InsightPeriod.DAILY:
+        if period == InsightPeriodEnum.DAILY:
             start_date = today  # Today only
             end_date = today
-        elif period == InsightPeriod.WEEKLY:
+        elif period == InsightPeriodEnum.WEEKLY:
             start_date = today - timedelta(days=6)  # Last 7 days
             end_date = today
-        elif period == InsightPeriod.MONTHLY:
+        elif period == InsightPeriodEnum.MONTHLY:
             start_date = today - timedelta(days=29)  # Last 30 days
             end_date = today
         else:
             return {"success": False, "error": "Unknown period."}
     else:
         # Use provided start_date and calculate end_date based on period
-        if period == InsightPeriod.DAILY:
+        if period == InsightPeriodEnum.DAILY:
             end_date = start_date
-        elif period == InsightPeriod.WEEKLY:
+        elif period == InsightPeriodEnum.WEEKLY:
             end_date = start_date + timedelta(days=6)
-        elif period == InsightPeriod.MONTHLY:
+        elif period == InsightPeriodEnum.MONTHLY:
             if start_date.month == 12:
                 end_date = start_date.replace(year=start_date.year + 1, month=1, day=1) - timedelta(days=1)
             else:
@@ -410,13 +410,13 @@ def generate_report(
             med_logs.extend(sched_logs)
 
     # Blood Pressure data
-    bp_schedules = db.query(BloodPressureSchedule).filter(
-        BloodPressureSchedule.user_id == current_user.id, 
-        BloodPressureSchedule.is_active == True
+    bp_schedules = db.query(BPSchedule).filter(
+        BPSchedule.user_id == current_user.id, 
+        BPSchedule.is_active == True
     ).all()
     
-    bp_logs = db.query(ScheduledBPLog).join(BloodPressureSchedule).filter(
-    BloodPressureSchedule.user_id == current_user.id,
+    bp_logs = db.query(ScheduledBPLog).join(BPSchedule).filter(
+    BPSchedule.user_id == current_user.id,
     ScheduledBPLog.checked_at >= datetime.combine(start_date, time.min),
     ScheduledBPLog.checked_at <= datetime.combine(end_date, time.max)
     ).all()
@@ -535,7 +535,7 @@ def generate_report(
 def get_adherence_summary(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    period: InsightPeriod = Query(InsightPeriod.DAILY, description="Report period: daily, weekly, or monthly"),
+    period: InsightPeriodEnum = Query(InsightPeriodEnum.DAILY, description="Report period: daily, weekly, or monthly"),
     start_date: date = Query(None, description="Optional start date override (if not provided, automatically calculated based on period)")
 ):
     """Return adherence summary with per-day adherence values for graphing."""
@@ -545,24 +545,24 @@ def get_adherence_summary(
     
     if start_date is None:
         # Auto-calculate start_date based on period (matching frontend logic)
-        if period == InsightPeriod.DAILY:
+        if period == InsightPeriodEnum.DAILY:
             start_date = today  # Today only
             end_date = today
-        elif period == InsightPeriod.WEEKLY:
+        elif period == InsightPeriodEnum.WEEKLY:
             start_date = today - timedelta(days=6)  # Last 7 days
             end_date = today
-        elif period == InsightPeriod.MONTHLY:
+        elif period == InsightPeriodEnum.MONTHLY:
             start_date = today - timedelta(days=29)  # Last 30 days
             end_date = today
         else:
             return {"success": False, "error": "Unknown period."}
     else:
         # Use provided start_date and calculate end_date based on period
-        if period == InsightPeriod.DAILY:
+        if period == InsightPeriodEnum.DAILY:
             end_date = start_date
-        elif period == InsightPeriod.WEEKLY:
+        elif period == InsightPeriodEnum.WEEKLY:
             end_date = start_date + timedelta(days=6)
-        elif period == InsightPeriod.MONTHLY:
+        elif period == InsightPeriodEnum.MONTHLY:
             if start_date.month == 12:
                 end_date = start_date.replace(year=start_date.year + 1, month=1, day=1) - timedelta(days=1)
             else:
@@ -592,13 +592,13 @@ def get_adherence_summary(
             ).all()
             med_logs.extend(sched_logs)
 
-    bp_schedules = db.query(BloodPressureSchedule).filter(
-        BloodPressureSchedule.user_id == current_user.id,
-        BloodPressureSchedule.is_active == True
+    bp_schedules = db.query(BPSchedule).filter(
+        BPSchedule.user_id == current_user.id,
+        BPSchedule.is_active == True
     ).all()
 
-    bp_logs = db.query(ScheduledBPLog).join(BloodPressureSchedule).filter(
-        BloodPressureSchedule.user_id == current_user.id,
+    bp_logs = db.query(ScheduledBPLog).join(BPSchedule).filter(
+        BPSchedule.user_id == current_user.id,
         ScheduledBPLog.checked_at >= datetime.combine(start_date, time.min),
         ScheduledBPLog.checked_at <= datetime.combine(end_date, time.max)
     ).all()

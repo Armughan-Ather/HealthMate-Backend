@@ -27,8 +27,7 @@ class Medicine(Base):
         CheckConstraint("LENGTH(TRIM(name)) >= 2", name='check_medicine_name_length'),
         CheckConstraint("LENGTH(TRIM(strength)) >= 1", name='check_strength_not_empty'),
         CheckConstraint("LENGTH(TRIM(form)) >= 2", name='check_form_not_empty'),
-        Index('idx_medicine_name', 'name'),
-        Index('idx_medicine_active', 'is_active'),
+        Index('idx_medicine_name', 'name')
     )
 
     @validates('name')
