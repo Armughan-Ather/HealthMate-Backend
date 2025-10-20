@@ -3,11 +3,11 @@ from typing import Optional
 import datetime
 
 class MedicationScheduleCreate(BaseModel):
-    time: datetime.time
+    scheduled_time: datetime.time
     dosage_instruction: Optional[str] = Field(None, max_length=200)
 
 class MedicationScheduleUpdate(BaseModel):
-    time: Optional[datetime.time] = None
+    scheduled_time: Optional[datetime.time] = None
     dosage_instruction: Optional[str] = Field(None, max_length=200)
 
 class MedicationScheduleResponse(BaseModel):

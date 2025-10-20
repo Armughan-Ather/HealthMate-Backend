@@ -9,6 +9,11 @@ from schemas.doctor_profiles import (
     DoctorProfileUpdate,
     DoctorProfileResponse
 )
+from utilities.permissions import can_modify_patient_schedules
+from crud import user_roles as user_roles_crud
+from schemas.user_roles import UserRoleCreate
+from constants.enums import UserRoleEnum
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter()
 
@@ -22,7 +27,17 @@ def create_doctor_profile(
     existing_profile = profiles_crud.get_doctor_profile_by_user_id(db, current_user.id)
     if existing_profile:
         raise HTTPException(status_code=400, detail="Profile already exists")
-    return profiles_crud.create_doctor_profile(db, profile)
+    profile.user_id = current_user.id
+    created = profiles_crud.create_doctor_profile(db, profile)
+    # ensure the user has the DOCTOR role; create if missing
+    existing_roles = user_roles_crud.get_roles_for_user(db, current_user.id)
+    if not any(getattr(r.role, 'value', str(r.role)) == UserRoleEnum.DOCTOR.value for r in existing_roles):
+        try:
+            role_obj = UserRoleCreate(user_id=current_user.id, role=UserRoleEnum.DOCTOR)
+            user_roles_crud.create_user_role(db, role_obj)
+        except IntegrityError:
+            pass
+    return created
 
 @router.get("/doctors/", response_model=List[DoctorProfileResponse])
 def read_doctors(

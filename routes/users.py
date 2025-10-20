@@ -19,10 +19,10 @@ from crud.users import (
     send_emailverification_email,
     hash_password,
     create_access_token,
-    add_attendant_email,
-    delete_attendant_email,
-    update_single_attendant_email,
-    send_email_to_attendants
+    # add_attendant_email,
+    # delete_attendant_email,
+    # update_single_attendant_email,
+    # send_email_to_attendants
 )
 
 from schemas.users import (
@@ -287,38 +287,38 @@ def delete_existing_user(
     return {"message": "User deleted successfully"}
 
 
-@router.post("/attendant-emails", response_model=UserResponse)
-def add_attendant(email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user = add_attendant_email(db, current_user.id, email)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+# @router.post("/attendant-emails", response_model=UserResponse)
+# def add_attendant(email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+#     user = add_attendant_email(db, current_user.id, email)
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     return user
 
 
-@router.delete("/attendant-emails", response_model=UserResponse)
-def remove_attendant(email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user = delete_attendant_email(db, current_user.id, email)
-    if not user:
-        raise HTTPException(status_code=404, detail="User or email not found")
-    return user
+# @router.delete("/attendant-emails", response_model=UserResponse)
+# def remove_attendant(email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+#     user = delete_attendant_email(db, current_user.id, email)
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User or email not found")
+#     return user
 
 
-@router.patch("/attendant-emails", response_model=UserResponse)
-def update_attendant_email(old_email: str, new_email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user = update_single_attendant_email(db, current_user.id, old_email, new_email)
-    if not user:
-        raise HTTPException(status_code=404, detail="User or email not found")
-    return user
+# @router.patch("/attendant-emails", response_model=UserResponse)
+# def update_attendant_email(old_email: str, new_email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+#     user = update_single_attendant_email(db, current_user.id, old_email, new_email)
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User or email not found")
+#     return user
 
-@router.post("/send-email-to-attendants")
-def send_email_to_attendants_route(
-    subject: str,
-    body: str,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return send_email_to_attendants(
-        attendant_emails=current_user.attendant_emails,
-        subject=subject,
-        body=body
-    )
+# @router.post("/send-email-to-attendants")
+# def send_email_to_attendants_route(
+#     subject: str,
+#     body: str,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
+#     return send_email_to_attendants(
+#         attendant_emails=current_user.attendant_emails,
+#         subject=subject,
+#         body=body
+#     )

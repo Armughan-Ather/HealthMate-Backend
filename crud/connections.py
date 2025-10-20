@@ -1,17 +1,21 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
-from models.connections import Connection, ConnectionStatusEnum
+from models.connections import Connection
+from constants.enums import ConnectionStatusEnum
 from schemas.connections import ConnectionCreate, ConnectionUpdate
+from sqlalchemy.exc import IntegrityError
 
 def create_connection(db: Session, connection: ConnectionCreate) -> Connection:
-    db_connection = Connection(
-        **connection.model_dump(),
-        status=ConnectionStatusEnum.PENDING,
-        requested_at=datetime.utcnow()
-    )
+    db_connection = Connection(**connection.model_dump())
+    # ensure default status is applied by model, but set explicitly for clarity
+    db_connection.status = ConnectionStatusEnum.PENDING
     db.add(db_connection)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise
     db.refresh(db_connection)
     return db_connection
 
@@ -52,7 +56,7 @@ def update_connection_status(
         update_data = connection_update.model_dump()
         for field, value in update_data.items():
             setattr(db_connection, field, value)
-        db_connection.responded_at = datetime.utcnow()
+        # updated_at will be set by the DB via onupdate=func.now()
         db.commit()
         db.refresh(db_connection)
     return db_connection

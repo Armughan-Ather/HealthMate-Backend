@@ -17,7 +17,7 @@ from crud.scheduled_bp_logs import (
     delete_bp_log,
     get_log_by_id,
     get_logs_by_schedule_id,
-    get_logs_by_user_id,
+    get_logs_by_patient_profile,
     get_logs_by_date_range,
     get_logs_by_date
 )
@@ -28,7 +28,7 @@ router = APIRouter()
 
 @router.post("/{schedule_id}", response_model=ScheduledBPLogResponse, status_code=status.HTTP_201_CREATED)
 def create_log(schedule_id: int, data: ScheduledBPLogCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    log = create_bp_log(db, user_id=current_user.id, schedule_id=schedule_id, data=data)
+    log = create_bp_log(db, actor_user=current_user, schedule_id=schedule_id, data=data)
     if not log:
         raise HTTPException(status_code=400, detail="No active schedule found for the provided time.")
     return log
@@ -59,39 +59,28 @@ def get_log_by_id(log_id: int, db: Session = Depends(get_db), current_user: User
 
 @router.get("/schedule/{schedule_id}", response_model=List[ScheduledBPLogResponse])
 def get_logs_by_schedule(schedule_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return get_logs_by_schedule_id(db, schedule_id)
+    return get_logs_by_schedule_id(db, current_user, schedule_id)
 
 
-@router.get("/user", response_model=List[ScheduledBPLogResponse])
-def get_logs_by_user(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return get_logs_by_user_id(db, current_user.id)
+@router.get("/patients/{patient_profile_id}", response_model=List[ScheduledBPLogResponse])
+def get_logs_for_patient(patient_profile_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return get_logs_by_patient_profile(db, current_user, patient_profile_id)
 
 
-@router.get("/date", response_model=List[ScheduledBPLogResponse])
+@router.get("/patients/{patient_profile_id}/date", response_model=List[ScheduledBPLogResponse])
 def get_logs_by_date_or_range(
+    patient_profile_id: int,
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    print(f"=== BP LOGS DATE QUERY ===")
-    print(f"User ID: {current_user.id}")
-    print(f"Date from: {date_from}")
-    print(f"Date to: {date_to}")
-    
     if date_from and date_to:
-        print(f"Using date range: {date_from} to {date_to}")
-        logs = get_logs_by_date_range(db, current_user.id, date_from, date_to)
+        logs = get_logs_by_date_range(db, current_user, patient_profile_id, date_from, date_to)
     elif date_from:
-        print(f"Using single date: {date_from}")
-        logs = get_logs_by_date(db, current_user.id, date_from)
+        logs = get_logs_by_date(db, current_user, patient_profile_id, date_from)
     else:
         raise HTTPException(status_code=400, detail="Please provide at least date_from or both date_from and date_to")
-
-    print(f"Found {len(logs)} BP logs")
-    for i, log in enumerate(logs):
-        print(f"  Log {i}: ID={log.id}, systolic={log.systolic}, diastolic={log.diastolic}, checked_at={log.checked_at}")
-    
     return logs
 
 

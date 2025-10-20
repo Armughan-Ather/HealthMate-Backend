@@ -8,11 +8,11 @@ def get_schedules_for_medication(db: Session, medication_id: int) -> List[Medica
     return db.query(MedicationSchedule).filter_by(medication_id=medication_id).all()
 
 
-def create_medication_schedule(db: Session, medication_id: int, time, dosage_instruction) -> MedicationSchedule:
+def create_medication_schedule(db: Session, medication_id: int, scheduled_time, dosage_instruction) -> MedicationSchedule:
     """Create a new medication schedule."""
     schedule = MedicationSchedule(
         medication_id=medication_id,
-        time=time,
+        scheduled_time=scheduled_time,
         dosage_instruction=dosage_instruction
     )
     db.add(schedule)
@@ -25,8 +25,8 @@ def update_medication_schedule(db: Session, schedule_id: int, payload: Medicatio
     schedule = db.query(MedicationSchedule).filter_by(id=schedule_id).first()
     if not schedule:
         return None
-    if payload.time is not None:
-        schedule.time = payload.time
+    if payload.scheduled_time is not None:
+        schedule.scheduled_time = payload.scheduled_time
     if payload.dosage_instruction is not None:
         schedule.dosage_instruction = payload.dosage_instruction
     return schedule

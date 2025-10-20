@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from datetime import datetime, date, time
+from datetime import datetime, time
 from typing import Optional
 
 # Nested schemas
@@ -20,7 +20,7 @@ class MedicationSchema(BaseModel):
 
 class MedicationScheduleSchema(BaseModel):
     id: int
-    time: time
+    scheduled_time: time
     dosage_instruction: Optional[str]
     medication: MedicationSchema
 

@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from schemas.medications import MedicationUpdate
 from fastapi import HTTPException, status
 
-def create_medication_with_schedules(db: Session, user_id: int, payload) -> Medication:
+def create_medication_with_schedules(db: Session, patient_profile_id: int, prescribed_by: int, payload) -> Medication:
     """Create medication along with its schedules."""
     # 1️⃣ Get or create medicine
     medicine = create_medicine(db, payload.name, payload.strength, payload.form, payload.generic_name)
@@ -24,12 +24,12 @@ def create_medication_with_schedules(db: Session, user_id: int, payload) -> Medi
 
     # 3️⃣ Create medication
     medication = Medication(
-        user_id=user_id,
+        patient_profile_id=patient_profile_id,
         medicine_id=medicine.id,
+        prescribed_by=prescribed_by,
         purpose=payload.purpose,
         duration_days=duration_days,
         start_date=payload.start_date,
-        end_date=payload.end_date
     )
     db.add(medication)
     try:
@@ -60,26 +60,26 @@ def create_medication_with_schedules(db: Session, user_id: int, payload) -> Medi
     return medication
 
 
-def count_medications(db: Session, user_id: int) -> int:
+def count_medications(db: Session, patient_profile_id: int) -> int:
     return db.query(Medication).filter(
-        Medication.user_id == user_id,
+        Medication.patient_profile_id == patient_profile_id,
         Medication.is_active.is_(True)
     ).count()
 
 
-def get_user_medicines(db: Session, user_id: int) -> List[Medicine]:
+def get_user_medicines(db: Session, patient_profile_id: int) -> List[Medicine]:
     return (
         db.query(Medicine)
         .join(Medication, Medication.medicine_id == Medicine.id)
-        .filter(Medication.user_id == user_id)
+        .filter(Medication.patient_profile_id == patient_profile_id)
         .distinct()
         .all()
     )
 
 
-def get_user_medications(db: Session, user_id: int) -> List[Medication]:
-    """List all medications for a user."""
-    return db.query(Medication).filter_by(user_id=user_id).all()
+def get_user_medications(db: Session, patient_profile_id: int) -> List[Medication]:
+    """List all medications for a patient profile."""
+    return db.query(Medication).filter_by(patient_profile_id=patient_profile_id).all()
 
 
 def normalize_time(t: time) -> time:
@@ -160,72 +160,72 @@ def update_medication(db: Session, medication_id: int, payload: MedicationUpdate
     return medication
 
 # def update_medication(db: Session, medication_id: int, payload: MedicationUpdate) -> Optional[Medication]:
-    medication = db.query(Medication).filter_by(id=medication_id).first()
-    if not medication:
-        return None
+#     medication = db.query(Medication).filter_by(id=medication_id).first()
+#     if not medication:
+#         return None
 
-    # Update or create medicine
-    medicine = create_medicine(db, payload.name.strip(), payload.strength.strip())
+#     # Update or create medicine
+#     medicine = create_medicine(db, payload.name.strip(), payload.strength.strip())
 
-    medication.medicine_id = medicine.id
-    medication.purpose = payload.purpose.strip()
-    medication.start_date = payload.start_date
-    medication.end_date = payload.end_date
-    medication.duration_days = (payload.end_date - payload.start_date).days + 1
+#     medication.medicine_id = medicine.id
+#     medication.purpose = payload.purpose.strip()
+#     medication.start_date = payload.start_date
+#     medication.end_date = payload.end_date
+#     medication.duration_days = (payload.end_date - payload.start_date).days + 1
 
-    if medication.duration_days <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="End date must be after or equal to start date."
-        )
+#     if medication.duration_days <= 0:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="End date must be after or equal to start date."
+#         )
 
-    try:
-        db.flush()
-    except IntegrityError as e:
-        db.rollback()
-        # Check if it's the unique constraint
-        if 'unique_medication' in str(e.orig):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Medication for this medicine already exists for the user."
-            )
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="An unexpected error occurred while creating medication."
-            )
+#     try:
+#         db.flush()
+#     except IntegrityError as e:
+#         db.rollback()
+#         # Check if it's the unique constraint
+#         if 'unique_medication' in str(e.orig):
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST,
+#                 detail="Medication for this medicine already exists for the user."
+#             )
+#         else:
+#             raise HTTPException(
+#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 detail="An unexpected error occurred while creating medication."
+#             )
 
-    # Map new schedules by time
-    new_schedule_map = {sched.time: sched.dosage_instruction.strip() for sched in payload.schedules}
+#     # Map new schedules by time
+#     new_schedule_map = {sched.time: sched.dosage_instruction.strip() for sched in payload.schedules}
 
-    # Map existing active schedules by time
-    existing_active_schedules = {
-        sched.time: sched for sched in medication.schedules if sched.is_active
-    }
+#     # Map existing active schedules by time
+#     existing_active_schedules = {
+#         sched.time: sched for sched in medication.schedules if sched.is_active
+#     }
 
-    # 1. Update or create schedules
-    for time, new_instruction in new_schedule_map.items():
-        if time in existing_active_schedules:
-            existing_schedule = existing_active_schedules[time]
-            existing_schedule.dosage_instruction = new_instruction  # ✅ Update dosage
-        else:
-            # ➕ Add new schedule
-            new_schedule = MedicationSchedule(
-                medication_id=medication.id,
-                time=time,
-                dosage_instruction=new_instruction,
-                is_active=True
-            )
-            db.add(new_schedule)
+#     # 1. Update or create schedules
+#     for time, new_instruction in new_schedule_map.items():
+#         if time in existing_active_schedules:
+#             existing_schedule = existing_active_schedules[time]
+#             existing_schedule.dosage_instruction = new_instruction  # ✅ Update dosage
+#         else:
+#             # ➕ Add new schedule
+#             new_schedule = MedicationSchedule(
+#                 medication_id=medication.id,
+#                 time=time,
+#                 dosage_instruction=new_instruction,
+#                 is_active=True
+#             )
+#             db.add(new_schedule)
 
-    # 2. Deactivate schedules not in new payload
-    new_times = set(new_schedule_map.keys())
-    for time, sched in existing_active_schedules.items():
-        if time not in new_times:
-            sched.is_active = False
+#     # 2. Deactivate schedules not in new payload
+#     new_times = set(new_schedule_map.keys())
+#     for time, sched in existing_active_schedules.items():
+#         if time not in new_times:
+#             sched.is_active = False
 
-    db.flush()
-    return medication
+#     db.flush()
+#     return medication
 
 
 def delete_medication(db: Session, medication_id: int, user_id: int) -> bool:

@@ -1,47 +1,45 @@
 from sqlalchemy.orm import Session
 from datetime import date, datetime
-from models.bp_schedules import BloodPressureSchedule
 from typing import List, Optional
-from schemas.bp_schedules import BPScheduleCreate, BPScheduleUpdate, BPScheduleResponse
 from fastapi import HTTPException, status
 
-def get_user_bp_schedules(db: Session, user_id: int) -> List[BloodPressureSchedule]:
-    return db.query(BloodPressureSchedule).filter_by(user_id=user_id).all()
+from models.bp_schedules import BPSchedule
+from schemas.bp_schedules import BPScheduleCreate, BPScheduleUpdate
+from utilities.permissions import can_modify_patient_schedules
 
-def create_bp_schedule(db: Session, user_id: int, payload: BPScheduleCreate) -> BloodPressureSchedule:
+def get_patient_bp_schedules(db: Session, patient_profile_id: int) -> List[BPSchedule]:
+    return db.query(BPSchedule).filter_by(patient_profile_id=patient_profile_id).all()
+
+def create_bp_schedules(db: Session, patient_profile_id: int, created_by: int, payload: BPScheduleCreate) -> List[BPSchedule]:
     start_date = payload.start_date or date.today()
-    end_date = payload.end_date
+    duration_days = payload.duration_days
 
-    if not end_date:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="End date is required."
+    if duration_days is not None and duration_days <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="duration_days must be positive if provided")
+
+    schedules: List[BPSchedule] = []
+    for t in payload.scheduled_time:
+        schedule = BPSchedule(
+            patient_profile_id=patient_profile_id,
+            scheduled_time=t,
+            duration_days=duration_days,
+            start_date=start_date,
+            # frequency and custom_days are optional; model defaults handle validation if provided
+            frequency=payload.frequency if getattr(payload, 'frequency', None) else None,
+            custom_days=payload.custom_days if getattr(payload, 'custom_days', None) else None,
+            is_active=True,
+            created_by=created_by,
         )
+        db.add(schedule)
+        schedules.append(schedule)
 
-    duration_days = (end_date - start_date).days + 1
-    if duration_days <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="End date must be after or equal to start date."
-        )
-
-    db_schedule = BloodPressureSchedule(
-        user_id=user_id,
-        start_date=start_date,
-        end_date=end_date,
-        frequency_hours=payload.frequency_hours,
-        target_systolic=payload.target_systolic,
-        target_diastolic=payload.target_diastolic,
-        notes=payload.notes
-    )
-    
-    db.add(db_schedule)
     db.commit()
-    db.refresh(db_schedule)
-    return db_schedule
+    for s in schedules:
+        db.refresh(s)
+    return schedules
 
-def update_bp_schedule(db: Session, schedule_id: int, payload: BPScheduleUpdate) -> Optional[BloodPressureSchedule]:
-    db_schedule = db.query(BloodPressureSchedule).filter_by(id=schedule_id).first()
+def update_bp_schedule(db: Session, schedule_id: int, payload: BPScheduleUpdate) -> Optional[BPSchedule]:
+    db_schedule = db.query(BPSchedule).filter_by(id=schedule_id).first()
     if not db_schedule:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -58,7 +56,7 @@ def update_bp_schedule(db: Session, schedule_id: int, payload: BPScheduleUpdate)
     return db_schedule
 
 def delete_bp_schedule(db: Session, schedule_id: int) -> bool:
-    db_schedule = db.query(BloodPressureSchedule).filter_by(id=schedule_id).first()
+    db_schedule = db.query(BPSchedule).filter_by(id=schedule_id).first()
     if not db_schedule:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
