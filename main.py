@@ -1,6 +1,4 @@
-import firebase
 import routes
-import models
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
@@ -42,21 +40,6 @@ async def root():
         </body>
     </html>
     """
-
-# @app.get("/", response_class=HTMLResponse)
-# async def root():
-#     return """
-#     <html>
-#         <head>
-#             <title>HealthMate API</title>
-#         </head>
-#         <body style="font-family: Arial; text-align: center; padding: 40px;">
-#             <h1>🚀 HealthMate API</h1>
-#             <p>Welcome to the backend of HealthMate!</p>
-#             <p>All endpoints are secured and documentation is disabled in production.</p>
-#         </body>
-#     </html>
-#     """
 
 app.add_middleware(
     CORSMiddleware,

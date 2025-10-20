@@ -17,6 +17,7 @@ from crud.users import (
     get_or_create_firebase_user,
     send_forgotpassword_email,
     send_emailverification_email,
+    generate_otp,
     hash_password,
     create_access_token,
     # add_attendant_email,
@@ -56,39 +57,36 @@ def forgot_password(data: ForgotPassword, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Generate token
-    token = secrets.token_urlsafe(32)
-    expiry = datetime.now(timezone.utc) + timedelta(hours=1)
-
-    user.reset_token = token
-    user.reset_token_expiry = expiry
+    otp = generate_otp()
+    user.password_reset_otp = otp
+    user.password_reset_otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=60)
     db.commit()
 
-    reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
-
-    send_forgotpassword_email(data.email, reset_link)
-
-    print(f"Password reset link: {reset_link}")
-
-    return {"message": "Reset link has been sent to your email."}
+    send_forgotpassword_email(user.email, otp)
+    return {"message": "Password reset OTP sent to your email."}
 
 
 @router.post("/reset-password")
 def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.reset_token == data.token).first()
-    if (
-        not user
-        or not user.reset_token_expiry
-        or user.reset_token_expiry < datetime.now(timezone.utc)
-    ):
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
+    if (
+        not user.password_reset_otp
+        or user.password_reset_otp != data.otp
+        or not user.password_reset_otp_expiry
+        or user.password_reset_otp_expiry < datetime.now(timezone.utc)
+    ):
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+
+    # Reset password
     user.password = hash_password(data.new_password)
-    user.reset_token = None
-    user.reset_token_expiry = None
+    user.password_reset_otp = None
+    user.password_reset_otp_expiry = None
     db.commit()
 
-    return {"message": "Password reset successfully. Login using the new password."}
+    return {"message": "Password reset successfully."}
 
 
 @router.post("/change-password")
@@ -164,32 +162,21 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
             )
 
         if not current_user.email_verified:
-            token = secrets.token_urlsafe(32)
-            expiry = datetime.now(timezone.utc) + timedelta(hours=1)
-
-            current_user.email_verification_token = token
-            current_user.email_verification_token_expiry = expiry
+            otp = generate_otp()
+            user.email_verification_otp = otp
+            user.email_verification_otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=60)
             db.commit()
 
-            email_verification_link = f"{FRONTEND_URL}/verify-email?token={token}"
+            send_emailverification_email(current_user.email, otp)
 
-            send_emailverification_email(current_user.email, email_verification_link)
-
-            print(f"Email verification link: {email_verification_link}")
+            print(f"Email verification link: {otp}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Your email address hasn't been verified yet. Please check your inbox for our verification email and click the link to activate your account.",
+                detail="Your email address hasn't been verified yet. Please check your inbox for our verification email and type in the OTP to activate your account.",
             )
 
     access_token = create_access_token(current_user.id)
     return {"message": "Login successful", "accessToken": access_token, "token_type": "bearer"}
-
-
-# @router.get("/verify", status_code=status.HTTP_200_OK)
-# def verify(
-#     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
-# ):
-#     return {"message": "access granted"}
 
 
 @router.post("")
@@ -217,18 +204,14 @@ def create_new_user(user: UserCreate, db: Session = Depends(get_db)):
     else:
         existing_user = create_user(db, user)
 
-    token = secrets.token_urlsafe(32)
-    expiry = datetime.now(timezone.utc) + timedelta(hours=1)
-
-    existing_user.email_verification_token = token
-    existing_user.email_verification_token_expiry = expiry
+    otp = generate_otp()
+    existing_user.email_verification_otp = otp
+    existing_user.email_verification_otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=60)
     db.commit()
 
-    email_verification_link = f"{FRONTEND_URL}/verify-email?token={token}"
+    send_emailverification_email(existing_user.email, otp)
 
-    send_emailverification_email(existing_user.email, email_verification_link)
-
-    print(f"Email verification link: {email_verification_link}")
+    print(f"Email verification link: {otp}")
 
     return {
         "message": "Signup successful. Please check your inbox for our verification email and click the link to activate your account."
@@ -237,16 +220,21 @@ def create_new_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/verify-email")
 def verify_email(data: VerifyEmail, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email_verification_token == data.token).first()
-    if (
-        not user
-        or not user.email_verification_token_expiry
-        or user.email_verification_token_expiry < datetime.now(timezone.utc)
-    ):
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    user = db.query(User).filter(User.email == data.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    user.email_verification_token = None
-    user.email_verification_token_expiry = None
+    if (
+        not user.email_verification_otp
+        or user.email_verification_otp != data.otp
+        or not user.email_verification_otp_expiry
+        or user.email_verification_otp_expiry < datetime.now(timezone.utc)
+    ):
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+
+    # Mark verified
+    user.email_verification_otp = None
+    user.email_verification_otp_expiry = None
     user.email_verified = True
     db.commit()
 

@@ -30,7 +30,7 @@ class AdhocSugarLog(Base):
     
     __table_args__ = (
         CheckConstraint('value >= 20 AND value <= 1000', name='check_adhoc_sugar_value_range'),
-        CheckConstraint("checked_at >= TIMESTAMP('2000-01-01')", name='check_adhoc_sugar_checked_at_reasonable'),
+        CheckConstraint("checked_at >= TIMESTAMP '2000-01-01'", name='check_adhoc_sugar_checked_at_reasonable'),
         CheckConstraint("checked_at <= CURRENT_TIMESTAMP + INTERVAL '1 day'", name='check_adhoc_sugar_checked_at_not_future'),
         Index('idx_adhoc_sugar_log_patient_checked', 'patient_profile_id', 'checked_at'),
     )

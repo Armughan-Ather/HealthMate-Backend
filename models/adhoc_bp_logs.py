@@ -33,22 +33,10 @@ class AdhocBPLog(Base):
         CheckConstraint('diastolic >= 30 AND diastolic <= 200', name='check_adhoc_bp_diastolic_range'),
         CheckConstraint('pulse IS NULL OR (pulse >= 30 AND pulse <= 250)', name='check_adhoc_bp_pulse_range'),
         CheckConstraint('systolic > diastolic', name='check_adhoc_bp_systolic_greater'),
-        CheckConstraint("checked_at >= TIMESTAMP('2000-01-01')", name='check_adhoc_bp_checked_at_reasonable'),
+        CheckConstraint("checked_at >= TIMESTAMP '2000-01-01'", name='check_adhoc_bp_checked_at_reasonable'),
         CheckConstraint("checked_at <= CURRENT_TIMESTAMP + INTERVAL '1 day'", name='check_adhoc_bp_checked_at_not_future'),
         Index('idx_adhoc_bp_log_patient_checked', 'patient_profile_id', 'checked_at'),
     )
-
-    @validates('systolic')
-    def validate_systolic(self, key, value):
-        if value < 50 or value > 300:
-            raise ValueError("Systolic must be between 50 and 300 mmHg")
-        return value
-
-    @validates('diastolic')
-    def validate_diastolic(self, key, value):
-        if value < 30 or value > 200:
-            raise ValueError("Diastolic must be between 30 and 200 mmHg")
-        return value
 
     @validates('pulse')
     def validate_pulse(self, key, value):
@@ -76,10 +64,14 @@ class AdhocBPLog(Base):
         """
         # We use getattr to fetch the *other* value dynamically
         if key == 'systolic':
+            if value < 50 or value > 300:
+                raise ValueError("Systolic must be between 50 and 300 mmHg")
             diastolic_val = getattr(self, 'diastolic', None)
             if diastolic_val is not None and value <= diastolic_val:
                 raise ValueError("Systolic must be greater than diastolic")
         elif key == 'diastolic':
+            if value < 30 or value > 200:
+                raise ValueError("Diastolic must be between 30 and 200 mmHg")
             systolic_val = getattr(self, 'systolic', None)
             if systolic_val is not None and systolic_val <= value:
                 raise ValueError("Systolic must be greater than diastolic")

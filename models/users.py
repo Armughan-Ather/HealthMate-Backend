@@ -30,10 +30,10 @@ class User(Base):
     date_of_birth = Column(Date, nullable=True)
     
     # Account Management
-    reset_token = Column(String(255), nullable=True, index=True)
-    reset_token_expiry = Column(DateTime(timezone=True), nullable=True)
-    email_verification_token = Column(String(255), nullable=True, index=True)
-    email_verification_token_expiry = Column(DateTime(timezone=True), nullable=True)
+    email_verification_otp = Column(String(6), nullable=True)
+    email_verification_otp_expiry = Column(DateTime(timezone=True), nullable=True)
+    password_reset_otp = Column(String(6), nullable=True)
+    password_reset_otp_expiry = Column(DateTime(timezone=True), nullable=True)
     email_verified = Column(Boolean, default=False, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     
@@ -78,9 +78,22 @@ class User(Base):
         CheckConstraint("phone IS NULL OR LENGTH(phone) >= 10", name='check_phone_min_length'),
         CheckConstraint("date_of_birth IS NULL OR date_of_birth < CURRENT_DATE", name='check_dob_past'),
         CheckConstraint("date_of_birth IS NULL OR date_of_birth >= DATE('1900-01-01')", name='check_dob_reasonable'),
-        CheckConstraint("reset_token_expiry IS NULL OR reset_token IS NOT NULL", name='check_reset_token_consistency'),
-        CheckConstraint("email_verification_token_expiry IS NULL OR email_verification_token IS NOT NULL", 
-                       name='check_verification_token_consistency'),
+        CheckConstraint(
+            "password_reset_otp_expiry IS NULL OR password_reset_otp IS NOT NULL",
+            name="check_password_reset_otp_consistency"
+        ),
+        CheckConstraint(
+            "email_verification_otp_expiry IS NULL OR email_verification_otp IS NOT NULL",
+            name="check_email_verification_otp_consistency"
+        ),
+        CheckConstraint(
+            "email_verified IN (TRUE, FALSE)",
+            name="check_email_verified_boolean"
+        ),
+        CheckConstraint(
+            "is_active IN (TRUE, FALSE)",
+            name="check_is_active_boolean"
+        ),
         Index('idx_user_email_verified', 'email_verified', 'is_active'),
         Index('idx_user_created_at', 'created_at'),
     )
@@ -96,19 +109,6 @@ class User(Base):
         value = value.strip()
         if len(value) < 2 or len(value) > 100:
             raise ValueError("Name must be between 2 and 100 characters")
-        return value
-
-    @validates('password')
-    def validate_password(self, key, value):
-        if value is not None:
-            if len(value) < 8:
-                raise ValueError("Password must be at least 8 characters long")
-            if not re.search(r"[A-Z]", value):
-                raise ValueError("Password must contain at least one uppercase letter")
-            if not re.search(r"[a-z]", value):
-                raise ValueError("Password must contain at least one lowercase letter")
-            if not re.search(r"\d", value):
-                raise ValueError("Password must contain at least one number")
         return value
 
     @validates('phone')
@@ -131,6 +131,12 @@ class User(Base):
 
     @validates('gender')
     def validate_gender(self, key, value):
-        if value is not None and value not in GenderEnum:
-            raise ValueError("Invalid gender value")
+        if value is not None:
+            # handle both string and Enum cases
+            if isinstance(value, str):
+                if value not in GenderEnum._value2member_map_:
+                    raise ValueError("Invalid gender value")
+                value = GenderEnum(value)  # convert to Enum
+            elif not isinstance(value, GenderEnum):
+                raise ValueError("Invalid gender value")
         return value

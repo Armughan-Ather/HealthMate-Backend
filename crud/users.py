@@ -7,6 +7,8 @@ from datetime import datetime, timedelta, timezone
 import os
 from dotenv import load_dotenv
 import jwt
+import re
+import random
 from fastapi import HTTPException, status
 from pydantic import EmailStr,validate_email, ValidationError
 from email_validator import validate_email, EmailNotValidError
@@ -18,50 +20,47 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def send_emailverification_email(recipient_email: str, message: str):
+def generate_otp() -> str:
+    """Generate a 6-digit OTP."""
+    return f"{random.randint(100000, 999999)}"
 
+def send_emailverification_email(recipient_email: str, otp: str):
     subject = "HealthMate – Verify Your Email Address"
-
     body = f"""
     Hello,
 
     Thank you for signing up with HealthMate!
 
-    To complete your registration and activate your account, please verify your email address by clicking the link below:
+    Your email verification code is: **{otp}**
 
-    {message}
+    This code will expire in 10 minutes.
 
     If you did not sign up for a HealthMate account, you can safely ignore this email.
 
-    Best regards,
+    Best regards,  
     Support Team
     """
-
     try:
         send_email(recipient_email, subject, body)
     except Exception as e:
         print(f"❌ Failed to send email: {e}")
 
-
-def send_forgotpassword_email(recipient_email: str, message: str):
-
-    subject = "HealthMate - Reset Your Password"
-
+def send_forgotpassword_email(recipient_email: str, otp: str):
+    subject = "HealthMate – Password Reset Code"
     body = f"""
     Hello,
 
     We received a request to reset your HealthMate account password.
 
-    To proceed, please click the link below:
+    Your OTP code is: **{otp}**
 
-    "{message}"
+    This code will expire in 10 minutes.
 
-    If you didn’t request this, you can safely ignore this email—your password will remain unchanged.
+    If you didn’t request this, you can safely ignore this email.
 
-    Best regards,
+    Best regards,  
     Support Team
     """
-
     try:
         send_email(recipient_email, subject, body)
     except Exception as e:
@@ -90,6 +89,23 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def create_user(db: Session, user_data: UserCreate):
+    # Validate raw password
+    if user_data.password:
+        password = user_data.password
+        if len(user_data.password) > 72:
+            raise HTTPException(status_code=400, detail="Password must not exceed 72 characters.")
+        if len(password) < 8:
+            raise HTTPException(status_code=400, detail="Password must be at least 8 characters long")
+        if not re.search(r"[A-Z]", password):
+            raise HTTPException(status_code=400, detail="Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", password):
+            raise HTTPException(status_code=400, detail="Password must contain at least one lowercase letter")
+        if not re.search(r"\d", password):
+            raise HTTPException(status_code=400, detail="Password must contain at least one number")
+        if len(password) > 72:
+            raise HTTPException(status_code=400, detail="Password must not exceed 72 characters.")
+
+        hashed_password = hash_password(password)
     hashed_password = hash_password(user_data.password) if user_data.password else None
     user = User(
         email=user_data.email,
@@ -97,19 +113,8 @@ def create_user(db: Session, user_data: UserCreate):
         password=hashed_password,
         phone=user_data.phone,
         address=user_data.address,
-
-        # BP thresholds
-        bp_systolic_min=user_data.bp_systolic_min,
-        bp_systolic_max=user_data.bp_systolic_max,
-        bp_diastolic_min=user_data.bp_diastolic_min,
-        bp_diastolic_max=user_data.bp_diastolic_max,
-
-        # Sugar thresholds
-        sugar_fasting_min=user_data.sugar_fasting_min,
-        sugar_fasting_max=user_data.sugar_fasting_max,
-        sugar_random_min=user_data.sugar_random_min,
-        sugar_random_max=user_data.sugar_random_max,
-
+        gender=user_data.gender,
+        date_of_birth=user_data.date_of_birth
     )
     db.add(user)
     db.commit()

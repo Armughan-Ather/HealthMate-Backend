@@ -30,7 +30,7 @@ class AdhocMedicationLog(Base):
     
     __table_args__ = (
         CheckConstraint("LENGTH(TRIM(dosage_taken)) >= 1", name='check_adhoc_dosage_taken_not_empty'),
-        CheckConstraint("taken_at >= TIMESTAMP('2000-01-01')", name='check_adhoc_taken_at_reasonable'),
+        CheckConstraint("taken_at >= TIMESTAMP '2000-01-01'", name='check_adhoc_taken_at_reasonable'),
         CheckConstraint("taken_at <= CURRENT_TIMESTAMP + INTERVAL '1 day'", name='check_adhoc_taken_at_not_future'),
         Index('idx_adhoc_med_log_patient_taken', 'patient_profile_id', 'taken_at'),
     )

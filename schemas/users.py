@@ -4,7 +4,8 @@ from typing import Optional
 
 
 class ResetPasswordRequest(BaseModel):
-    token: str
+    email: EmailStr
+    otp: str
     new_password: str
 
 
@@ -13,7 +14,8 @@ class ForgotPassword(BaseModel):
 
 
 class VerifyEmail(BaseModel):
-    token: str
+    email: EmailStr
+    otp: str
 
 
 class PasswordChangeRequest(BaseModel):
