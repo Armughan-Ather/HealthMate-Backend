@@ -18,7 +18,7 @@ from sqlalchemy.exc import IntegrityError
 router = APIRouter()
 
 # Doctor Profile Routes
-@router.post("/doctors/", response_model=DoctorProfileResponse)
+@router.post("", response_model=DoctorProfileResponse)
 def create_doctor_profile(
     profile: DoctorProfileCreate,
     db: Session = Depends(get_db),
@@ -39,15 +39,7 @@ def create_doctor_profile(
             pass
     return created
 
-@router.get("/doctors/", response_model=List[DoctorProfileResponse])
-def read_doctors(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db)
-):
-    return profiles_crud.get_all_doctors(db, skip=skip, limit=limit)
-
-@router.get("/doctors/{profile_id}", response_model=DoctorProfileResponse)
+@router.get("/{profile_id}", response_model=DoctorProfileResponse)
 def read_doctor_profile(
     profile_id: int,
     db: Session = Depends(get_db)
@@ -57,7 +49,7 @@ def read_doctor_profile(
         raise HTTPException(status_code=404, detail="Profile not found")
     return profile
 
-@router.put("/doctors/{profile_id}", response_model=DoctorProfileResponse)
+@router.put("/{profile_id}", response_model=DoctorProfileResponse)
 def update_doctor_profile(
     profile_id: int,
     profile: DoctorProfileUpdate,

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from datetime import datetime
 
 class MedicineCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
@@ -14,7 +15,7 @@ class MedicineResponse(BaseModel):
     strength: str
     form: str
     generic_name: Optional[str] = None
-    created_at: Optional[str] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True

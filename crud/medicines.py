@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from models.medicines import Medicine
+from fastapi import HTTPException
 
 
 def get_medicine_by_medicine_id(db: Session, medicine_id: int) -> Optional[Medicine]:
@@ -25,7 +26,7 @@ def create_medicine(db: Session, name: str, strength: str, form: str, generic_na
     """Create a new medicine or return an existing one."""
     existing = get_medicine_by_name_strength_form(db, name, strength, form)
     if existing:
-        return existing
+        raise HTTPException(status_code=400, detail="Medicine already exists")
     medicine = Medicine(name=name, strength=strength, form=form, generic_name=generic_name)
     db.add(medicine)
     db.flush()

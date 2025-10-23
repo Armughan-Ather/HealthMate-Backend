@@ -73,8 +73,7 @@ def can_modify_patient_logs(db: Session, actor_user, patient_profile_id: int) ->
         return False
     if getattr(actor_user, 'id', None) is None:
         return False
-    # patient_profile_id is the PatientProfile.id; fetch profile to compare owner
-    patient = db.query(PatientProfile).filter(PatientProfile.id == patient_profile_id).first()
+    patient = db.query(PatientProfile).filter(PatientProfile.user_id == patient_profile_id).first()
     if patient and getattr(patient, 'user_id', None) == actor_user.id:
         return True
 
@@ -91,7 +90,7 @@ def can_modify_patient_schedules(db: Session, actor_user, patient_profile_id: in
     if actor_user is None:
         return False
     # owner check: patient_profile.user_id should match actor_user.id
-    patient = db.query(PatientProfile).filter(PatientProfile.id == patient_profile_id).first()
+    patient = db.query(PatientProfile).filter(PatientProfile.user_id == patient_profile_id).first()
     if patient and getattr(patient, 'user_id', None) == actor_user.id:
         return True
     if is_attendant(actor_user) and is_attendant_of(db, actor_user.id, patient_profile_id):

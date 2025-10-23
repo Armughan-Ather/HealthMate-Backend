@@ -16,7 +16,7 @@ class PatientProfileBase(BaseModel):
 
 
 class PatientProfileCreate(PatientProfileBase):
-    user_id: int
+    pass
 
 
 class PatientProfileUpdate(BaseModel):
