@@ -4,6 +4,7 @@ from models.user_roles import UserRole
 from constants.enums import UserRoleEnum
 from models.connections import Connection
 from models.patient_profiles import PatientProfile
+from fastapi import HTTPException, status
 
 
 def is_patient(user) -> bool:
@@ -74,6 +75,10 @@ def can_modify_patient_logs(db: Session, actor_user, patient_profile_id: int) ->
     if getattr(actor_user, 'id', None) is None:
         return False
     patient = db.query(PatientProfile).filter(PatientProfile.user_id == patient_profile_id).first()
+    if patient is None:
+        raise HTTPException(
+            status_code=404, detail="Patient profile not found"
+        )
     if patient and getattr(patient, 'user_id', None) == actor_user.id:
         return True
 
@@ -89,8 +94,15 @@ def can_modify_patient_schedules(db: Session, actor_user, patient_profile_id: in
     # Patients, attendants, and doctors can modify schedules
     if actor_user is None:
         return False
+    if getattr(actor_user, 'id', None) is None:
+        return False
     # owner check: patient_profile.user_id should match actor_user.id
     patient = db.query(PatientProfile).filter(PatientProfile.user_id == patient_profile_id).first()
+    if patient is None:
+        raise HTTPException(
+            status_code=404, detail="Patient profile not found"
+        )
+    
     if patient and getattr(patient, 'user_id', None) == actor_user.id:
         return True
     if is_attendant(actor_user) and is_attendant_of(db, actor_user.id, patient_profile_id):

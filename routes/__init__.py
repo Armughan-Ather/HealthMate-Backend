@@ -33,7 +33,7 @@ router.include_router(medicines_router, prefix="/medicines", tags=["Medicines"])
 router.include_router(medications_router, prefix="/medications", tags=["Medications"])
 router.include_router(medication_schedules_router, prefix="/medication_schedules", tags=["Medication_Schedules"])
 router.include_router(scheduled_medication_logs_router, prefix="/scheduled_medication_logs", tags=["Scheduled_Medication_Logs"])
-router.include_router(adhoc_medication_logs_router, prefix="/adhoc_medication_logs", tags=["Adhoc_Medication_Logs"])
+# router.include_router(adhoc_medication_logs_router, prefix="/adhoc_medication_logs", tags=["Adhoc_Medication_Logs"])
 
 # router.include_router(chats_router, prefix="/chats", tags=["Chats"])
 # router.include_router(messages_router, prefix="/messages", tags=["Messages"])

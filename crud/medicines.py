@@ -31,3 +31,11 @@ def create_medicine(db: Session, name: str, strength: str, form: str, generic_na
     db.add(medicine)
     db.flush()
     return medicine
+
+def get_or_create_medicine(db: Session, name: str, strength: str, form: str, generic_name: Optional[str] = None) -> Medicine:
+    """Get an existing medicine or create a new one."""
+    existing = get_medicine_by_name_strength_form(db, name, strength, form)
+    if existing:
+        return existing
+    medicine = create_medicine(db, name, strength, form, generic_name)
+    return medicine

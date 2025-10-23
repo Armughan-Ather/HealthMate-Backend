@@ -1,10 +1,10 @@
 import routes
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
 from tasks.scheduler import start_scheduler
 import os
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 is_production = os.getenv("ENV") == "production"
@@ -53,3 +53,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(routes.router)
 start_scheduler()
+
+@app.exception_handler(ValueError)
+async def value_error_exception_handler(request: Request, exc: ValueError):
+    return JSONResponse(status_code=422, content={"detail": str(exc)})

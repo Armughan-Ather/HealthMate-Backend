@@ -26,7 +26,6 @@ def update_patient_profile(db: Session, profile_id: int, profile: PatientProfile
         update_data = profile.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_profile, field, value)
-        db_profile.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(db_profile)
     return db_profile

@@ -4,20 +4,47 @@ from datetime import timedelta, date, time
 from models.medications import Medication
 from models.medication_schedules import MedicationSchedule
 from models.medicines import Medicine
-from .medicines import create_medicine
+from .medicines import create_medicine, get_or_create_medicine
 from sqlalchemy.exc import IntegrityError
-from schemas.medications import MedicationUpdate
+from schemas.medications import MedicationUpdate, MedicationCreateWithSchedules
 from fastapi import HTTPException, status
+from utilities.permissions import can_modify_patient_schedules
 
-def create_medication_with_schedules(db: Session, patient_profile_id: int, prescribed_by: int, payload) -> Medication:
+def create_medication_core(
+    db: Session,
+    current_user,
+    patient_profile_id: int,
+    payload
+):
+    """
+    Centralized logic for creating a medication and its schedules.
+    Shared by both /me/... and /patients/{id}/... routes.
+    """
+
+    # RBAC check
+    if not can_modify_patient_schedules(db, current_user.id, patient_profile_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to create medication for this patient."
+        )
+
+    medication = create_medication_with_schedules(
+        db=db,
+        patient_profile_id=patient_profile_id,
+        prescribed_by=current_user.id,
+        payload=payload
+    )
+
+    db.commit()
+    db.refresh(medication)
+    return medication
+
+def create_medication_with_schedules(db: Session, patient_profile_id: int, prescribed_by: int, payload: MedicationCreateWithSchedules) -> Medication:
     """Create medication along with its schedules."""
     # 1️⃣ Get or create medicine
-    medicine = create_medicine(db, payload.name, payload.strength, payload.form, payload.generic_name)
+    medicine = get_or_create_medicine(db, payload.name, payload.strength, payload.form, payload.generic_name)
 
-    # 2️⃣ Compute duration
-    #duration_days = (payload.end_date - payload.start_date).days + 1
-    duration_days =payload.duration_days 
-    if duration_days <= 0:
+    if payload.duration_days <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="End date must be after or equal to start date."
@@ -29,7 +56,7 @@ def create_medication_with_schedules(db: Session, patient_profile_id: int, presc
         medicine_id=medicine.id,
         prescribed_by=prescribed_by,
         purpose=payload.purpose,
-        duration_days=duration_days,
+        duration_days=payload.duration_days,
         start_date=payload.start_date,
     )
     db.add(medication)

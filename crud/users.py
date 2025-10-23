@@ -155,33 +155,12 @@ def update_user(db: Session, user_id: int, user_data: UserUpdate):
         return None
 
     # Update fields if present
-    if user_data.name is not None:
-        user.name = user_data.name
-
     if user_data.phone is not None:
         user.phone = user_data.phone
     if user_data.address is not None:
         user.address = user_data.address
     if user_data.is_active is not None:
         user.is_active = user_data.is_active
-
-    if user_data.bp_systolic_min is not None:
-        user.bp_systolic_min = user_data.bp_systolic_min
-    if user_data.bp_systolic_max is not None:
-        user.bp_systolic_max = user_data.bp_systolic_max
-    if user_data.bp_diastolic_min is not None:
-        user.bp_diastolic_min = user_data.bp_diastolic_min
-    if user_data.bp_diastolic_max is not None:
-        user.bp_diastolic_max = user_data.bp_diastolic_max
-
-    if user_data.sugar_fasting_min is not None:
-        user.sugar_fasting_min = user_data.sugar_fasting_min
-    if user_data.sugar_fasting_max is not None:
-        user.sugar_fasting_max = user_data.sugar_fasting_max
-    if user_data.sugar_random_min is not None:
-        user.sugar_random_min = user_data.sugar_random_min
-    if user_data.sugar_random_max is not None:
-        user.sugar_random_max = user_data.sugar_random_max
 
     db.commit()
     db.refresh(user)
@@ -199,17 +178,6 @@ def delete_user(db: Session, user_id: int):
         db.commit()
     return user
 
-
-# def add_attendant_email(db: Session, user_id: int, email: str):
-#     raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
-
-
-# def delete_attendant_email(db: Session, user_id: int, email: str):
-#     raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
-
-
-# def update_single_attendant_email(db: Session, user_id: int, old_email: str, new_email: str):
-#     raise HTTPException(status_code=410, detail="Attendant emails deprecated; use connections API")
 
 # def send_email_to_attendants(attendant_emails: list[str], subject: str, body: str):
 #     if not attendant_emails:

@@ -40,17 +40,26 @@ def create_patient_profile(
             pass
     return created
 
-@router.get("", response_model=PatientProfileResponse)
+# for attendants and doctors to view patient profiles
+@router.get("/{patient_profile_id}", response_model=PatientProfileResponse)
 def read_patient_profile(
-    profile_id: Optional[int] = None,
+    patient_profile_id: int,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    if profile_id is not None and not can_modify_patient_schedules(db, current_user, profile_id):
+    if not can_modify_patient_schedules(db, current_user, patient_profile_id):
         raise HTTPException(status_code=403, detail="Not authorized to get profile of this patient")
-    if not profile_id:
-        profile_id = current_user.id
-    profile = profiles_crud.get_patient_profile(db, profile_id)
+    profile = profiles_crud.get_patient_profile(db, patient_profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
+
+@router.get("", response_model=PatientProfileResponse)
+def read_patient_profile(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    profile = profiles_crud.get_patient_profile(db, current_user.id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     return profile
