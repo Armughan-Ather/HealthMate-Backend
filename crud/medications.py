@@ -15,7 +15,8 @@ def create_medication_with_schedules(db: Session, patient_profile_id: int, presc
     medicine = create_medicine(db, payload.name, payload.strength, payload.form, payload.generic_name)
 
     # 2️⃣ Compute duration
-    duration_days = (payload.end_date - payload.start_date).days + 1
+    #duration_days = (payload.end_date - payload.start_date).days + 1
+    duration_days =payload.duration_days 
     if duration_days <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -52,7 +53,7 @@ def create_medication_with_schedules(db: Session, patient_profile_id: int, presc
     for schedule_data in payload.schedules:
         schedule = MedicationSchedule(
             medication_id=medication.id,
-            time=schedule_data.time,
+            scheduled_time=schedule_data.scheduled_time,
             dosage_instruction=schedule_data.dosage_instruction
         )
         db.add(schedule)
@@ -95,7 +96,9 @@ def update_medication(db: Session, medication_id: int, payload: MedicationUpdate
         )
 
     # Validate dates
-    duration_days = (payload.end_date - payload.start_date).days + 1
+    #duration_days = (payload.end_date - payload.start_date).days + 1
+    duration_days =payload.duration_days 
+    
     if duration_days <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

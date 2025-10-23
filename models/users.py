@@ -20,7 +20,6 @@ class User(Base):
     password = Column(String(255), nullable=True)
     
     # Social Login
-    microsoft_firebase_uid = Column(String(255), unique=True, nullable=True, index=True)
     google_firebase_uid = Column(String(255), unique=True, nullable=True, index=True)
     
     # Demographics (Universal)
@@ -73,7 +72,7 @@ class User(Base):
         CheckConstraint("email LIKE '%@%' AND email LIKE '%_._%'", name='check_email_format'),
         CheckConstraint("LENGTH(TRIM(name)) >= 2", name='check_name_min_length'),
         CheckConstraint("LENGTH(name) <= 100", name='check_name_max_length'),
-        CheckConstraint("password IS NOT NULL OR microsoft_firebase_uid IS NOT NULL OR google_firebase_uid IS NOT NULL", 
+        CheckConstraint("password IS NOT NULL OR google_firebase_uid IS NOT NULL", 
                        name='check_auth_method_exists'),
         CheckConstraint("phone IS NULL OR LENGTH(phone) >= 10", name='check_phone_min_length'),
         CheckConstraint("date_of_birth IS NULL OR date_of_birth < CURRENT_DATE", name='check_dob_past'),

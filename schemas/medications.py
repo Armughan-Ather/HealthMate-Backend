@@ -4,7 +4,7 @@ from datetime import datetime, date, time
 
 
 class MedicationScheduleCreate(BaseModel):
-    reminder_time: time
+    scheduled_time: time
     dosage_instruction: Optional[str] = Field(None, min_length=1, max_length=200)
 
 class MedicationCreateWithSchedules(BaseModel):
@@ -41,7 +41,7 @@ class MedicationUpdate(BaseModel):
 
 class MedicationScheduleResponse(BaseModel):
     id: int
-    reminder_time: time
+    scheduled_time: time
     dosage_instruction: Optional[str]
     is_active: bool
 

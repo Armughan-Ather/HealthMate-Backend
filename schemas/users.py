@@ -31,7 +31,6 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: Optional[str] = None
     google_firebase_uid: Optional[str] = None
-    microsoft_firebase_uid: Optional[str] = None
 
     phone: Optional[str] = None
     address: Optional[str] = None
@@ -59,7 +58,6 @@ class UserResponse(UserBase):
     gender: Optional[str] = None
     date_of_birth: Optional[date] = None
     google_firebase_uid: Optional[str] = None
-    microsoft_firebase_uid: Optional[str] = None
     email_verified: bool
     is_active: bool
     created_at: datetime

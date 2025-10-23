@@ -23,7 +23,7 @@ def create_medication_for_patient(
     current_user: User = Depends(get_current_user),
 ):
     # RBAC: patient, attendant, or connected doctor may create medications
-    if not can_modify_patient_schedules(db, current_user, patient_profile_id):
+    if not can_modify_patient_schedules(db, current_user.id, patient_profile_id):
         raise HTTPException(status_code=403, detail="Not authorized to create medication for this patient")
     med = medications_crud.create_medication_with_schedules(db, patient_profile_id, current_user.id, payload)
     db.commit()

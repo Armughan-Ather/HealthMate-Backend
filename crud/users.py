@@ -22,7 +22,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def generate_otp() -> str:
     """Generate a 6-digit OTP."""
-    return f"{random.randint(100000, 999999)}"
+    return f"{random.randint(10000, 99999)}"
 
 def send_emailverification_email(recipient_email: str, otp: str):
     subject = "HealthMate – Verify Your Email Address"
@@ -131,9 +131,7 @@ def get_or_create_firebase_user(
         # Update the corresponding Firebase UID field if it's not already set
         if provider == "google.com" and not user.google_firebase_uid:
             user.google_firebase_uid = firebase_uid
-        elif provider == "microsoft.com" and not user.microsoft_firebase_uid:
-            user.microsoft_firebase_uid = firebase_uid
-
+        
         db.commit()
         db.refresh(user)
         return user
@@ -143,7 +141,7 @@ def get_or_create_firebase_user(
         email=email,
         name=name,
         google_firebase_uid=firebase_uid if provider == "google" else None,
-        microsoft_firebase_uid=firebase_uid if provider == "microsoft" else None,
+        
     )
     db.add(user)
     db.commit()
