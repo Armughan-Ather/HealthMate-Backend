@@ -15,6 +15,12 @@ from utilities.permissions import can_modify_patient_schedules
 router = APIRouter()
 
 
+@router.get("/me", response_model=List[MedicationResponse])
+def list_user_medications(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    """List all medications for the current user."""
+    medications = medications_crud.get_user_medications(db, current_user.id)
+    return medications
+
 # 🩺 For doctors/attendants managing a patient
 @router.post("/patients/{patient_profile_id}", response_model=MedicationResponse, status_code=status.HTTP_201_CREATED)
 def create_medication_for_patient(patient_profile_id: int, payload: MedicationCreateWithSchedules, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -91,7 +97,7 @@ def create_medication_for_self(payload: MedicationCreateWithSchedules, db: Sessi
     #     )
 
     # Use the patient profile from the authenticated user
-    patient_profile_id = current_user.patient_profile.id
+    patient_profile_id = current_user.patient_profile.user_id
 
     return medications_crud.create_medication_core(db, current_user, patient_profile_id, payload)
 
@@ -102,9 +108,3 @@ def count_user_medications(db: Session = Depends(get_db), current_user=Depends(g
     active_count = medications_crud.count_medications(db, current_user.id)
     return {"active_count": active_count}
 
-
-@router.get("/me", response_model=List[MedicationResponse])
-def list_user_medications(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    """List all medications for the current user."""
-    medications = medications_crud.get_user_medications(db, current_user.id)
-    return medications

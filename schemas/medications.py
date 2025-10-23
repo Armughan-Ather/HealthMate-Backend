@@ -21,7 +21,7 @@ class MedicationUpdate(BaseModel):
     duration_days: Optional[int] = None
     start_date: Optional[date] = None
     is_active: Optional[bool] = None
-    frequency: Optional[str] = None
+    frequency: Optional[FrequencyEnum] = None
     custom_days: Optional[List[str]] = None
 
 
@@ -52,6 +52,7 @@ class MedicationResponse(BaseModel):
     duration_days: Optional[int]
     start_date: date
     is_active: bool
+    frequency: Optional[str] 
     created_at: datetime
     updated_at: datetime
     schedules: List[MedicationScheduleResponse]
