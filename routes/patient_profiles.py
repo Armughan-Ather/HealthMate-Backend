@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from middlewares.auth import get_current_user
+from middlewares.auth import get_current_user, get_current_user_without_role, require_patient, require_attendant, require_medical_staff, require_doctor
 from database import get_db
 from crud import patient_profiles as profiles_crud
 from schemas.patient_profiles import (
@@ -22,7 +22,7 @@ router = APIRouter()
 def create_patient_profile(
     profile: PatientProfileCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user_without_role)
 ):
     # ensure the profile is created for the authenticated user
     existing_profile = profiles_crud.get_patient_profile_by_user_id(db, current_user.id)
@@ -57,7 +57,7 @@ def read_patient_profile(
 @router.get("", response_model=PatientProfileResponse)
 def read_patient_profile(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(require_patient)
 ):
     profile = profiles_crud.get_patient_profile(db, current_user.id)
     if not profile:
@@ -68,7 +68,7 @@ def read_patient_profile(
 def update_patient_profile(
     profile: PatientProfileUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user = Depends(require_patient)
 ):
     db_profile = profiles_crud.get_patient_profile(db, current_user.id)
     if not db_profile:

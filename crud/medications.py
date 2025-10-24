@@ -114,6 +114,7 @@ def get_user_medications(db: Session, patient_profile_id: int) -> List[Medicatio
 
 def normalize_time(t: time) -> time:
     return t.replace(second=0, microsecond=0, tzinfo=None)
+
 def update_medication(db: Session, medication_id: int, payload: MedicationUpdate) -> Optional[Medication]:
     medication = db.query(Medication).filter_by(id=medication_id).first()
     if not medication:
@@ -141,10 +142,8 @@ def update_medication(db: Session, medication_id: int, payload: MedicationUpdate
         medication.start_date = payload.start_date
 
     if payload.frequency is not None:
-        print('Updating frequency to:', payload.frequency.value)
-        medication.frequency = payload.frequency.value
-
-
+        medication.frequency = payload.frequency
+    
     if payload.custom_days is not None:
         medication.custom_days = payload.custom_days
 
@@ -201,158 +200,6 @@ def update_medication(db: Session, medication_id: int, payload: MedicationUpdate
         )
 
     return medication
-
-# def update_medication(db: Session, medication_id: int, payload: MedicationUpdate) -> Optional[Medication]:
-#     medication = db.query(Medication).filter_by(id=medication_id).first()
-#     if not medication:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Medication not found."
-#         )
-
-#     # Validate dates
-#     #duration_days = (payload.end_date - payload.start_date).days + 1
-#     duration_days =payload.duration_days 
-    
-#     if duration_days <= 0:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="End date must be after or equal to start date."
-#         )
-
-#     # Get or create medicine
-#     medicine = create_medicine(db, payload.name.strip(), payload.strength.strip(), payload.form.strip(), (payload.generic_name.strip() if payload.generic_name else None))
-
-#     # Update medication fields
-#     medication.medicine_id = medicine.id
-#     medication.purpose = payload.purpose.strip() if payload.purpose else None
-#     medication.start_date = payload.start_date
-#     medication.end_date = payload.end_date
-#     medication.duration_days = duration_days
-
-#     try:
-#         db.flush()
-#     except IntegrityError as e:
-#         db.rollback()
-#         if 'unique_medication' in str(e.orig):
-#             raise HTTPException(
-#                 status_code=status.HTTP_400_BAD_REQUEST,
-#                 detail="Medication for this medicine already exists for the user."
-#             )
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#             detail="Unexpected DB error during medication update."
-#         )
-
-#     # Process schedules
-#     for sched in payload.schedules:
-#         norm_time = normalize_time(sched.time)
-#         instruction = (
-#             sched.dosage_instruction.strip()
-#             if sched.dosage_instruction and sched.dosage_instruction.strip()
-#             else None
-#         )
-
-#         existing = db.query(MedicationSchedule).filter_by(
-#             medication_id=medication.id,
-#             time=norm_time
-#         ).first()
-
-#         if not existing:
-#             # ➕ New time — insert
-#             db.add(MedicationSchedule(
-#                 medication_id=medication.id,
-#                 time=norm_time,
-#                 dosage_instruction=instruction,
-#                 is_active=True
-#             ))
-#         elif not existing.is_active:
-#             # ✅ Exists but inactive — reactivate and update instruction
-#             existing.is_active = True
-#             existing.dosage_instruction = instruction
-#         elif instruction is not None:
-#             # ✏️ Exists and active — update instruction only if provided
-#             existing.dosage_instruction = instruction
-
-#     db.flush()
-#     return medication
-
-# def update_medication(db: Session, medication_id: int, payload: MedicationUpdate) -> Optional[Medication]:
-#     medication = db.query(Medication).filter_by(id=medication_id).first()
-#     if not medication:
-#         return None
-
-#     # Update or create medicine
-#     medicine = create_medicine(db, payload.name.strip(), payload.strength.strip())
-
-#     medication.medicine_id = medicine.id
-#     medication.purpose = payload.purpose.strip()
-#     medication.start_date = payload.start_date
-#     medication.end_date = payload.end_date
-#     medication.duration_days = (payload.end_date - payload.start_date).days + 1
-
-#     if medication.duration_days <= 0:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="End date must be after or equal to start date."
-#         )
-
-#     try:
-#         db.flush()
-#     except IntegrityError as e:
-#         db.rollback()
-#         # Check if it's the unique constraint
-#         if 'unique_medication' in str(e.orig):
-#             raise HTTPException(
-#                 status_code=status.HTTP_400_BAD_REQUEST,
-#                 detail="Medication for this medicine already exists for the user."
-#             )
-#         else:
-#             raise HTTPException(
-#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-#                 detail="An unexpected error occurred while creating medication."
-#             )
-
-#     # Map new schedules by time
-#     new_schedule_map = {sched.time: sched.dosage_instruction.strip() for sched in payload.schedules}
-
-#     # Map existing active schedules by time
-#     existing_active_schedules = {
-#         sched.time: sched for sched in medication.schedules if sched.is_active
-#     }
-
-#     # 1. Update or create schedules
-#     for time, new_instruction in new_schedule_map.items():
-#         if time in existing_active_schedules:
-#             existing_schedule = existing_active_schedules[time]
-#             existing_schedule.dosage_instruction = new_instruction  # ✅ Update dosage
-#         else:
-#             # ➕ Add new schedule
-#             new_schedule = MedicationSchedule(
-#                 medication_id=medication.id,
-#                 time=time,
-#                 dosage_instruction=new_instruction,
-#                 is_active=True
-#             )
-#             db.add(new_schedule)
-
-#     # 2. Deactivate schedules not in new payload
-#     new_times = set(new_schedule_map.keys())
-#     for time, sched in existing_active_schedules.items():
-#         if time not in new_times:
-#             sched.is_active = False
-
-#     db.flush()
-#     return medication
-
-
-# def delete_medication(db: Session, medication_id: int, user_id: int) -> bool:
-#     """Delete a medication and its schedules."""
-#     medication = db.query(Medication).filter_by(id=medication_id, user_id=user_id).first()
-#     if not medication:
-#         return False
-#     db.delete(medication)
-#     return True
 
 
 def delete_medication(db: Session, medication_id: int, patient_profile_id: int) -> bool:

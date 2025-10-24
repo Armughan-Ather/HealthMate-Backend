@@ -12,6 +12,8 @@ import random
 from fastapi import HTTPException, status
 from pydantic import EmailStr,validate_email, ValidationError
 from email_validator import validate_email, EmailNotValidError
+from constants.enums import UserRoleEnum
+from typing import Optional
 load_dotenv()
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -67,9 +69,13 @@ def send_forgotpassword_email(recipient_email: str, otp: str):
         print(f"❌ Failed to send email: {e}")
 
 
-def create_access_token(user_id: int):
+def create_access_token(user_id: int, user_role: Optional[UserRoleEnum] = None):
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload = {"user_id": user_id, "exp": expire}
+    payload = {
+        "user_id": user_id,
+        "role": user_role.value if user_role else None,
+        "exp": expire
+    }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 

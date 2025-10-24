@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional, List
 from datetime import datetime, date, time
-from .medication_schedules import MedicationScheduleCreate
-from constants.enums import FrequencyEnum
+from .medication_schedules import MedicationScheduleCreate, MedicationScheduleResponse
+from .medicines import MedicineResponse
+from constants.enums import FrequencyEnum, DayOfWeekEnum
 
 class MedicationCreateWithSchedules(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
@@ -14,7 +15,7 @@ class MedicationCreateWithSchedules(BaseModel):
     duration_days: Optional[int] = None
     schedules: List[MedicationScheduleCreate]
     frequency: Optional[str] = FrequencyEnum.DAILY.value
-    custom_days: Optional[List[str]] = None
+    custom_days: Optional[List[DayOfWeekEnum]] = None
 
 class MedicationUpdate(BaseModel):
     purpose: Optional[str] = None
@@ -22,27 +23,8 @@ class MedicationUpdate(BaseModel):
     start_date: Optional[date] = None
     is_active: Optional[bool] = None
     frequency: Optional[FrequencyEnum] = None
-    custom_days: Optional[List[str]] = None
-
-
-class MedicationScheduleResponse(BaseModel):
-    id: int
-    scheduled_time: time
-    dosage_instruction: Optional[str]
-    is_active: bool
-
-    class Config:
-        from_attributes = True
-
-
-class MedicineResponse(BaseModel):
-    id: int
-    name: str
-    strength: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
+    custom_days: Optional[List[DayOfWeekEnum]] = None
+    schedules: List[MedicationScheduleCreate]
 
 class MedicationResponse(BaseModel):
     id: int
@@ -52,7 +34,8 @@ class MedicationResponse(BaseModel):
     duration_days: Optional[int]
     start_date: date
     is_active: bool
-    frequency: Optional[str] 
+    frequency: FrequencyEnum
+    custom_days: Optional[List[DayOfWeekEnum]] 
     created_at: datetime
     updated_at: datetime
     schedules: List[MedicationScheduleResponse]

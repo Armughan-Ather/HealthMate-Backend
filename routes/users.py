@@ -38,7 +38,7 @@ from schemas.users import (
 )
 
 from models.users import User
-from middlewares.auth import get_current_user, verify_firebase_token
+from middlewares.auth import get_current_user, get_current_user_without_role, verify_firebase_token
 
 load_dotenv()
 FRONTEND_URL = os.getenv("FRONTEND_URL")
@@ -93,7 +93,7 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
 def change_password(
     request: PasswordChangeRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_without_role),
 ):
     if not request.old_password or not request.new_password:
         raise HTTPException(
@@ -244,7 +244,7 @@ def verify_email(data: VerifyEmail, db: Session = Depends(get_db)):
 
 @router.get("", response_model=UserResponse)
 def read_user(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_user_without_role)
 ):
     db_user = get_user(db, current_user.id)
     if db_user is None:
@@ -256,7 +256,7 @@ def read_user(
 def update_existing_user(
     user: UserUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_without_role),
 ):
     updated_user = update_user(db, current_user.id, user)
     if updated_user is None:
@@ -267,36 +267,12 @@ def update_existing_user(
 @router.delete("")
 def delete_existing_user(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user_without_role),
 ):
     deleted_user = delete_user(db, current_user.id)
     if deleted_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
-
-
-# @router.post("/attendant-emails", response_model=UserResponse)
-# def add_attendant(email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-#     user = add_attendant_email(db, current_user.id, email)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User not found")
-#     return user
-
-
-# @router.delete("/attendant-emails", response_model=UserResponse)
-# def remove_attendant(email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-#     user = delete_attendant_email(db, current_user.id, email)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User or email not found")
-#     return user
-
-
-# @router.patch("/attendant-emails", response_model=UserResponse)
-# def update_attendant_email(old_email: str, new_email: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-#     user = update_single_attendant_email(db, current_user.id, old_email, new_email)
-#     if not user:
-#         raise HTTPException(status_code=404, detail="User or email not found")
-#     return user
 
 # @router.post("/send-email-to-attendants")
 # def send_email_to_attendants_route(

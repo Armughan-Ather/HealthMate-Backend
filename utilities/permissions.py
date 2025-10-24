@@ -10,40 +10,25 @@ from fastapi import HTTPException, status
 def is_patient(user) -> bool:
     if not user:
         return False
-    # user role may be in roles relationship
-    for r in getattr(user, 'roles', []):
-        try:
-            if r.role == UserRoleEnum.PATIENT:
-                return True
-        except Exception:
-            if str(r.role).upper() == 'PATIENT':
-                return True
+    if user.active_role == UserRoleEnum.PATIENT:
+        return True
     return False
 
 
 def is_doctor(user) -> bool:
     if not user:
         return False
-    for r in getattr(user, 'roles', []):
-        try:
-            if r.role == UserRoleEnum.DOCTOR:
-                return True
-        except Exception:
-            if str(r.role).upper() == 'DOCTOR':
-                return True
+    if user.active_role == UserRoleEnum.DOCTOR:
+        return True
+    return False
     return False
 
 
 def is_attendant(user) -> bool:
     if not user:
         return False
-    for r in getattr(user, 'roles', []):
-        try:
-            if r.role == UserRoleEnum.ATTENDANT:
-                return True
-        except Exception:
-            if str(r.role).upper() == 'ATTENDANT':
-                return True
+    if user.active_role == UserRoleEnum.ATTENDANT:
+        return True
     return False
 
 
@@ -79,7 +64,7 @@ def can_modify_patient_logs(db: Session, actor_user, patient_profile_id: int) ->
         raise HTTPException(
             status_code=404, detail="Patient profile not found"
         )
-    if patient and getattr(patient, 'user_id', None) == actor_user.id:
+    if patient and getattr(patient, 'user_id', None) == actor_user.id  and actor_user.active_role == UserRoleEnum.PATIENT:
         return True
 
     # Attendants accepted for that patient can modify logs
@@ -103,7 +88,7 @@ def can_modify_patient_schedules(db: Session, actor_user, patient_profile_id: in
             status_code=404, detail="Patient profile not found"
         )
     
-    if patient and getattr(patient, 'user_id', None) == actor_user.id:
+    if patient and getattr(patient, 'user_id', None) == actor_user.id and actor_user.active_role == UserRoleEnum.PATIENT:
         return True
     if is_attendant(actor_user) and is_attendant_of(db, actor_user.id, patient_profile_id):
         return True

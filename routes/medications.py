@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Dict
 from database import get_db
-from middlewares.auth import get_current_user
+from middlewares.auth import get_current_user, require_medical_staff, require_patient, require_attendant, require_doctor
 from models.users import User
 from crud import medications as medications_crud
 from schemas.medications import (
@@ -14,16 +14,9 @@ from utilities.permissions import can_modify_patient_schedules
 
 router = APIRouter()
 
-
-@router.get("/me", response_model=List[MedicationResponse])
-def list_user_medications(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    """List all medications for the current user."""
-    medications = medications_crud.get_user_medications(db, current_user.id)
-    return medications
-
 # 🩺 For doctors/attendants managing a patient
 @router.post("/patients/{patient_profile_id}", response_model=MedicationResponse, status_code=status.HTTP_201_CREATED)
-def create_medication_for_patient(patient_profile_id: int, payload: MedicationCreateWithSchedules, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def create_medication_for_patient(patient_profile_id: int, payload: MedicationCreateWithSchedules, db: Session = Depends(get_db), current_user: User = Depends(require_medical_staff)):
     """
     Create a medication for a specific patient.
     Accessible by attendants and connected doctors.
@@ -32,11 +25,18 @@ def create_medication_for_patient(patient_profile_id: int, payload: MedicationCr
 
 
 @router.get("/patients/{patient_profile_id}", response_model=List[MedicationResponse])
-def list_medications_for_patient(patient_profile_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def list_medications_for_patient(patient_profile_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_medical_staff)):
     if not can_modify_patient_schedules(db, current_user, patient_profile_id):
         raise HTTPException(status_code=403, detail="Not authorized to view medications for this patient")
     return medications_crud.get_user_medications(db, patient_profile_id)
 
+@router.get("/count/{patient_profile_id}", response_model=Dict[str, int])
+def count_user_medications(patient_profile_id:int, db: Session = Depends(get_db), current_user=Depends(require_medical_staff)):
+    """Count active medications for the current user."""
+    if not can_modify_patient_schedules(db, current_user, patient_profile_id):
+        raise HTTPException(status_code=403, detail="Not authorized to view medications for this patient")
+    active_count = medications_crud.count_medications(db, patient_profile_id)
+    return {"active_count": active_count}
 
 @router.get("/{medication_id}", response_model=MedicationResponse)
 def get_medication(medication_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -74,27 +74,25 @@ def delete_medication(medication_id: int, db: Session = Depends(get_db), current
     db.commit()
     return {"message": "Medication deleted"}
 
-@router.get("/count/{patient_profile_id}", response_model=Dict[str, int])
-def count_user_medications(patient_profile_id:int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    """Count active medications for the current user."""
-    if not can_modify_patient_schedules(db, current_user, patient_profile_id):
-        raise HTTPException(status_code=403, detail="Not authorized to view medications for this patient")
-    active_count = medications_crud.count_medications(db, patient_profile_id)
-    return {"active_count": active_count}
+
+@router.get("/me", response_model=List[MedicationResponse])
+def list_user_medications(db: Session = Depends(get_db), current_user=Depends(require_patient)):
+    """List all medications for the current user."""
+    if current_user.role != "PATIENT":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only patients can use this endpoint.")
+    medications = medications_crud.get_user_medications(db, current_user.id)
+    return medications
 
 
 # 👤 For patients adding their own medication
 @router.post("/me", response_model=MedicationResponse, status_code=status.HTTP_201_CREATED)
-def create_medication_for_self(payload: MedicationCreateWithSchedules, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def create_medication_for_self(payload: MedicationCreateWithSchedules, db: Session = Depends(get_db), current_user: User = Depends(require_patient)):
     """
     Create a medication for the current patient (self).
     Only accessible if the current user is a patient.
     """
-    # if current_user.role != "patient":
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Only patients can use this endpoint."
-    #     )
+    if current_user.role != "PATIENT":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only patients can use this endpoint.")
 
     # Use the patient profile from the authenticated user
     patient_profile_id = current_user.patient_profile.user_id
@@ -103,8 +101,9 @@ def create_medication_for_self(payload: MedicationCreateWithSchedules, db: Sessi
 
 
 @router.get("/me/count", response_model=Dict[str, int])
-def count_user_medications(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def count_user_medications(db: Session = Depends(get_db), current_user=Depends(require_patient)):
     """Count active medications for the current user."""
+    if current_user.role != "PATIENT":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only patients can use this endpoint.")
     active_count = medications_crud.count_medications(db, current_user.id)
     return {"active_count": active_count}
-

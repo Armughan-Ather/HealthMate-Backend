@@ -1,15 +1,16 @@
 from fastapi import APIRouter
 
 from routes.users import router as users_router
-from routes.doctor_profiles import router as doctor_profiles_router
+from routes.user_roles import router as user_roles_router
 from routes.patient_profiles import router as patient_profiles_router
-from routes.connections import router as connections_router
+# from routes.doctor_profiles import router as doctor_profiles_router
+# from routes.connections import router as connections_router
 
 from routes.medicines import router as medicines_router
 from routes.medications import router as medications_router
-from routes.medication_schedules import router as medication_schedules_router
-from routes.scheduled_medication_logs import router as scheduled_medication_logs_router
-from routes.adhoc_medication_logs import router as adhoc_medication_logs_router
+# from routes.medication_schedules import router as medication_schedules_router
+# from routes.scheduled_medication_logs import router as scheduled_medication_logs_router
+# from routes.adhoc_medication_logs import router as adhoc_medication_logs_router
 
 # from routes.chats import router as chats_router
 # from routes.messages import router as messages_router
@@ -25,14 +26,15 @@ router = APIRouter()
 
 # Include all routers
 router.include_router(users_router, prefix="/users", tags=["Users"])
+router.include_router(user_roles_router, prefix="/user_roles", tags=["User_Roles"])
 router.include_router(patient_profiles_router, prefix="/patient_profiles", tags=["Patient_Profiles"])
 # router.include_router(doctor_profiles_router, prefix="/doctor_profiles", tags=["Doctor_Profiles"])
 # router.include_router(connections_router, prefix="/connections", tags=["Connections"])
 
 router.include_router(medicines_router, prefix="/medicines", tags=["Medicines"])
 router.include_router(medications_router, prefix="/medications", tags=["Medications"])
-router.include_router(medication_schedules_router, prefix="/medication_schedules", tags=["Medication_Schedules"])
-router.include_router(scheduled_medication_logs_router, prefix="/scheduled_medication_logs", tags=["Scheduled_Medication_Logs"])
+# router.include_router(medication_schedules_router, prefix="/medication_schedules", tags=["Medication_Schedules"])
+# router.include_router(scheduled_medication_logs_router, prefix="/scheduled_medication_logs", tags=["Scheduled_Medication_Logs"])
 # router.include_router(adhoc_medication_logs_router, prefix="/adhoc_medication_logs", tags=["Adhoc_Medication_Logs"])
 
 # router.include_router(chats_router, prefix="/chats", tags=["Chats"])
