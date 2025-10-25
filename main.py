@@ -58,6 +58,10 @@ app.include_router(routes.router)
 # async def startup_event():
 #     # start_scheduler()
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
 @app.exception_handler(ValueError)
 async def value_error_exception_handler(request: Request, exc: ValueError):
     return JSONResponse(status_code=422, content={"detail": str(exc)})
