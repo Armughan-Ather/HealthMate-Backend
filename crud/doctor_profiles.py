@@ -3,16 +3,22 @@ from models.doctor_profiles import DoctorProfile
 from schemas.doctor_profiles import DoctorProfileCreate, DoctorProfileUpdate
 from typing import List, Optional
 from datetime import datetime
+from fastapi import HTTPException
+from models.user_roles import UserRole
+from constants.enums import UserRoleEnum
 
-def create_doctor_profile(db: Session, profile: DoctorProfileCreate) -> DoctorProfile:
-    db_profile = DoctorProfile(**profile.model_dump())
+def create_doctor_profile(db: Session, profile: DoctorProfileCreate, user_id: int) -> DoctorProfile:
+    db_profile = DoctorProfile(**profile.model_dump(), user_id=user_id)
     db.add(db_profile)
     db.commit()
     db.refresh(db_profile)
     return db_profile
 
 def get_doctor_profile(db: Session, profile_id: int) -> Optional[DoctorProfile]:
-    return db.query(DoctorProfile).filter(DoctorProfile.id == profile_id).first()
+    profile = db.query(DoctorProfile).filter(DoctorProfile.user_id == profile_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
 
 def get_doctor_profile_by_user_id(db: Session, user_id: int) -> Optional[DoctorProfile]:
     return db.query(DoctorProfile).filter(DoctorProfile.user_id == user_id).first()
@@ -30,3 +36,15 @@ def update_doctor_profile(db: Session, profile_id: int, profile: DoctorProfileUp
         db.commit()
         db.refresh(db_profile)
     return db_profile
+
+def delete_doctor_profile(db: Session, user_id: int):
+    profile = db.query(DoctorProfile).filter(DoctorProfile.user_id == user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    db.query(UserRole).filter(
+        UserRole.user_id == user_id,
+        UserRole.role == UserRoleEnum.DOCTOR
+    ).delete()
+    db.delete(profile)
+    db.commit()
+    return True

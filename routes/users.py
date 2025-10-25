@@ -176,7 +176,11 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
             )
 
     access_token = create_access_token(current_user.id)
-    return {"message": "Login successful", "accessToken": access_token, "token_type": "bearer"}
+    return {
+        "message": "Login successful",
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
 
 
 @router.post("")
@@ -239,7 +243,11 @@ def verify_email(data: VerifyEmail, db: Session = Depends(get_db)):
     db.commit()
 
     access_token = create_access_token(user.id)
-    return {"message": "Email Verified", "accessToken": access_token}
+    return {
+        "message": "Email Verified",
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
 
 
 @router.get("", response_model=UserResponse)

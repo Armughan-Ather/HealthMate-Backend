@@ -11,10 +11,10 @@ class DoctorProfile(Base):
     __tablename__ = 'doctor_profiles'
     
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
-    license_number = Column(String(100), unique=True, nullable=True, index=True)
+    license_number = Column(String(100), unique=True, nullable=False, index=True)
     specialization = Column(String(200), nullable=True)
     bio = Column(Text, nullable=True)
-    years_of_experience = Column(Integer, nullable=True)
+    years_of_experience = Column(Integer, nullable=False, default=0)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

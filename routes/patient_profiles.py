@@ -74,3 +74,11 @@ def update_patient_profile(
     if not db_profile:
         raise HTTPException(status_code=404, detail="Profile not found")
     return profiles_crud.update_patient_profile(db, current_user.id, profile)
+
+@router.delete("", status_code=204)
+def delete_patient_profile(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_patient)
+):
+    profiles_crud.delete_patient_profile(db, current_user.id)
+    return {"detail": "Profile deleted successfully"}

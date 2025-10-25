@@ -3,6 +3,9 @@ from models.patient_profiles import PatientProfile
 from schemas.patient_profiles import PatientProfileCreate, PatientProfileUpdate
 from typing import List, Optional
 from datetime import datetime
+from fastapi import HTTPException
+from models.user_roles import UserRole
+from constants.enums import UserRoleEnum
 
 def create_patient_profile(db: Session, profile: PatientProfileCreate, user_id: int) -> PatientProfile:
     db_profile = PatientProfile(**profile.model_dump(), user_id=user_id)
@@ -29,3 +32,18 @@ def update_patient_profile(db: Session, profile_id: int, profile: PatientProfile
         db.commit()
         db.refresh(db_profile)
     return db_profile
+
+def delete_patient_profile(db: Session, user_id: int):
+    profile = db.query(PatientProfile).filter(PatientProfile.user_id == user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    try:
+        db.query(UserRole).filter(
+            UserRole.user_id == user_id,
+            UserRole.role == UserRoleEnum.PATIENT
+        ).delete()
+    except:
+        pass
+    db.delete(profile)
+    db.commit()
+    return True

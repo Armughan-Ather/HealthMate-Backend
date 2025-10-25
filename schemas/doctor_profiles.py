@@ -4,25 +4,23 @@ from typing import Optional
 
 
 class DoctorProfileBase(BaseModel):
-    license_number: Optional[str] = None
+    license_number: str
     specialization: Optional[str] = None
     bio: Optional[str] = None
-    years_of_experience: Optional[int] = None
+    years_of_experience: Optional[int] = 0
 
 
 class DoctorProfileCreate(DoctorProfileBase):
-    user_id: int
+    pass
 
 
 class DoctorProfileUpdate(BaseModel):
-    license_number: Optional[str] = None
     specialization: Optional[str] = None
     bio: Optional[str] = None
     years_of_experience: Optional[int] = None
 
 
 class DoctorProfileResponse(DoctorProfileBase):
-    id: int
     user_id: int
     created_at: datetime
     updated_at: datetime
