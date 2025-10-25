@@ -53,10 +53,10 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(routes.router)
 
-# ✅ Start scheduler only when FastAPI is ready
-@app.on_event("startup")
-async def startup_event():
-    start_scheduler()
+# # ✅ Start scheduler only when FastAPI is ready
+# @app.on_event("startup")
+# async def startup_event():
+#     # start_scheduler()
 
 @app.exception_handler(ValueError)
 async def value_error_exception_handler(request: Request, exc: ValueError):
