@@ -1,132 +1,108 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from database import get_db
 from middlewares.auth import get_current_user
-from crud import connections as connections_crud
-from schemas.connections import (
-    ConnectionCreate,
-    ConnectionUpdate,
-    ConnectionResponse,
-    ConnectionStatusEnum,
-    ConnectionTypeEnum
-)
-from constants.enums import ConnectionTypeEnum as ModelConnectionType
-from utilities.permissions import is_doctor, is_attendant, is_patient
+from schemas.connections import ConnectionCreate, ConnectionUpdate, ConnectionResponse
+from crud import connections as conn_crud
+from models.user_roles import UserRole
+from models.users import User
+from constants.enums import ConnectionTypeEnum
+
+router = APIRouter(prefix="/connections", tags=["Connections"])
 
 
-router = APIRouter()
-
-@router.post("/connections/", response_model=ConnectionResponse)
+@router.post("", response_model=ConnectionResponse, status_code=status.HTTP_201_CREATED)
 def create_connection(
-    connection: ConnectionCreate,
+    payload: ConnectionCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    # Allow either the patient or the connected_user to initiate a connection request
-    if current_user.id not in (connection.patient_id, connection.connected_user_id):
-        raise HTTPException(status_code=403, detail="Only the patient or the provider may initiate connection requests")
+    """
+    Create a new connection.
+    - If user is a PATIENT, they connect to a DOCTOR or ATTENDANT.
+    - If user is a DOCTOR or ATTENDANT, they connect to a PATIENT.
+    - Each user’s active role context defines the scope of visibility.
+    """
 
-    # Validate connected_user role in DB to match requested connection_type
-    # fetch connected user roles
-    from models.user_roles import UserRole
-    roles = db.query(UserRole).filter(UserRole.user_id == connection.connected_user_id).all()
-    role_names = {r.role.value if hasattr(r.role, 'value') else str(r.role) for r in roles}
+    # Fetch roles for initiator and target
+    my_roles = {r.role.value for r in db.query(UserRole).filter(UserRole.user_id == current_user.id).all()}
+    target_roles = {r.role.value for r in db.query(UserRole).filter(UserRole.user_id == payload.target_user_id).all()}
 
-    if connection.connection_type == ConnectionTypeEnum.DOCTOR and 'DOCTOR' not in role_names:
-        raise HTTPException(status_code=400, detail="Connected user is not a doctor")
-    if connection.connection_type == ConnectionTypeEnum.ATTENDANT and 'ATTENDANT' not in role_names:
-        raise HTTPException(status_code=400, detail="Connected user is not an attendant")
+    # Role logic
+    if current_user.active_role.value == "PATIENT":
+        if "PATIENT" not in my_roles:
+            raise HTTPException(status_code=400, detail="You are not a patient.")
+        patient_id = current_user.id
+        connected_user_id = payload.target_user_id
 
-    return connections_crud.create_connection(db, connection)
+        if payload.connection_type == ConnectionTypeEnum.DOCTOR and "DOCTOR" not in target_roles:
+            raise HTTPException(status_code=400, detail="Target user is not a doctor.")
+        if payload.connection_type == ConnectionTypeEnum.ATTENDANT and "ATTENDANT" not in target_roles:
+            raise HTTPException(status_code=400, detail="Target user is not an attendant.")
 
+    elif current_user.active_role.value in ("DOCTOR", "ATTENDANT"):
+        if current_user.active_role.value != payload.connection_type.name:
+            raise HTTPException(
+                status_code=400,
+                detail=f"As a {current_user.active_role.value.lower()}, you can only create "
+                       f"{current_user.active_role.value.lower()} connections."
+            )
+        if "PATIENT" not in target_roles:
+            raise HTTPException(status_code=400, detail="Target user is not a patient.")
 
-@router.post("/connections/{connection_id}/cancel")
-def cancel_connection_request(connection_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    # Patient can cancel a pending request they initiated
-    conn = connections_crud.get_connection(db, connection_id)
-    if not conn:
-        raise HTTPException(status_code=404, detail="Connection not found")
-    # either side that is part of this connection may cancel a pending request
-    if current_user.id not in (conn.patient_id, conn.connected_user_id):
-        raise HTTPException(status_code=403, detail="Not authorized to cancel this request")
-    if conn.status != ConnectionStatusEnum.PENDING:
-        raise HTTPException(status_code=400, detail="Only pending requests can be canceled")
-    # mark as REVOKED to indicate cancellation
-    from schemas.connections import ConnectionUpdate
-    upd = ConnectionUpdate(status=ConnectionStatusEnum.REVOKED)
-    return connections_crud.update_connection_status(db, connection_id, upd)
+        patient_id = payload.target_user_id
+        connected_user_id = current_user.id
 
+    else:
+        raise HTTPException(status_code=400, detail="User role not permitted to initiate connection.")
 
-@router.post("/connections/{connection_id}/revoke")
-def revoke_connection(connection_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    # Patient can revoke an accepted connection
-    conn = connections_crud.get_connection(db, connection_id)
-    if not conn:
-        raise HTTPException(status_code=404, detail="Connection not found")
-    if conn.patient_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to revoke this connection")
-    # only accepted connections can be revoked
-    if conn.status != ConnectionStatusEnum.ACCEPTED:
-        raise HTTPException(status_code=400, detail="Only accepted connections can be revoked")
-    from schemas.connections import ConnectionUpdate
-    upd = ConnectionUpdate(status=ConnectionStatusEnum.REVOKED)
-    return connections_crud.update_connection_status(db, connection_id, upd)
-
-
-@router.get("/connections/incoming", response_model=List[ConnectionResponse])
-def incoming_requests(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-    # Providers can list incoming pending requests where they are the connected_user
-    return connections_crud.get_provider_connections(db, current_user.id, ConnectionStatusEnum.PENDING)
-
-@router.get("/connections/patient/{patient_id}", response_model=List[ConnectionResponse])
-def read_patient_connections(
-    patient_id: int,
-    status: Optional[ConnectionStatusEnum] = None,
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
-    # patients can only view their own connections
-    if current_user.id != patient_id:
-        raise HTTPException(status_code=403, detail="Not authorized to view these connections")
-    return connections_crud.get_patient_connections(
-        db, patient_id, status, skip, limit
+    # Create and trigger notifications
+    connection = conn_crud.create_connection(
+        db=db,
+        payload=payload,
+        current_user_id=current_user.id,
+        patient_id=patient_id,
+        connected_user_id=connected_user_id
     )
 
-@router.get("/connections/provider/{provider_id}", response_model=List[ConnectionResponse])
-def read_provider_connections(
-    provider_id: int,
-    status: Optional[ConnectionStatusEnum] = None,
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
-):
-    # providers (doctors/attendants) can only view connections where they are the connected_user
-    if current_user.id != provider_id:
-        raise HTTPException(status_code=403, detail="Not authorized to view these connections")
-    return connections_crud.get_provider_connections(
-        db, provider_id, status, skip, limit
-    )
+    return connection
 
-@router.put("/connections/{connection_id}", response_model=ConnectionResponse)
-def update_connection(
+
+@router.put("/{connection_id}", response_model=ConnectionResponse)
+def update_connection_status(
     connection_id: int,
-    connection: ConnectionUpdate,
+    payload: ConnectionUpdate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    db_connection = connections_crud.get_connection(db, connection_id)
-    if not db_connection:
-        raise HTTPException(status_code=404, detail="Connection not found")
-    # Only the connected_user can accept/reject a connection
-    if current_user.id != db_connection.connected_user_id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this connection")
+    """Approve, reject, or revoke a connection based on user role and state transitions."""
+    connection = conn_crud.update_connection_status(db, connection_id, payload, current_user.id)
+    return connection
 
-    # Only allow Accept or Reject via this endpoint
-    if connection.status not in {ConnectionStatusEnum.ACCEPTED, ConnectionStatusEnum.REJECTED}:
-        raise HTTPException(status_code=400, detail="Connected user may only accept or reject requests")
 
-    return connections_crud.update_connection_status(db, connection_id, connection)
+@router.get("", response_model=List[ConnectionResponse])
+def get_approved_connections(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Return all accepted connections in current user’s active role context."""
+    return conn_crud.get_approved_connections_for_user(db, current_user.id, current_user.active_role.value)
+
+
+@router.get("/requests/received", response_model=List[ConnectionResponse])
+def get_pending_received(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Return all pending connection requests received by the user."""
+    return conn_crud.get_pending_received(db, current_user.id, current_user.active_role.value)
+
+
+@router.get("/requests/sent", response_model=List[ConnectionResponse])
+def get_pending_sent(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Return all pending connection requests sent by the user."""
+    return conn_crud.get_pending_sent(db, current_user.id, current_user.active_role.value)

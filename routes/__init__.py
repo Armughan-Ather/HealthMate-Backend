@@ -4,7 +4,7 @@ from routes.users import router as users_router
 from routes.user_roles import router as user_roles_router
 from routes.patient_profiles import router as patient_profiles_router
 from routes.doctor_profiles import router as doctor_profiles_router
-# from routes.connections import router as connections_router
+from routes.connections import router as connections_router
 
 from routes.medicines import router as medicines_router
 from routes.medications import router as medications_router
@@ -29,7 +29,7 @@ router.include_router(users_router, prefix="/users", tags=["Users"])
 router.include_router(user_roles_router, prefix="/user_roles", tags=["User_Roles"])
 router.include_router(patient_profiles_router, prefix="/patient_profiles", tags=["Patient_Profiles"])
 router.include_router(doctor_profiles_router, prefix="/doctor_profiles", tags=["Doctor_Profiles"])
-# router.include_router(connections_router, prefix="/connections", tags=["Connections"])
+router.include_router(connections_router, prefix="/connections", tags=["Connections"])
 
 router.include_router(medicines_router, prefix="/medicines", tags=["Medicines"])
 router.include_router(medications_router, prefix="/medications", tags=["Medications"])
