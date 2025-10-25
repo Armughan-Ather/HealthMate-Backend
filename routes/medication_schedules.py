@@ -1,8 +1,9 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from database import get_db
-from middlewares.auth import get_current_user
+from middlewares.auth import get_current_user, require_medical_staff, require_patient
 from models.medication_schedules import MedicationSchedule
 from models.medications import Medication
 from models.users import User
@@ -22,7 +23,7 @@ from schemas.medication_schedules import (
 router = APIRouter()
 
 
-@router.get("/medications/{medication_id}/schedules", response_model=List[MedicationScheduleResponse])
+@router.get("/medication/{medication_id}", response_model=List[MedicationScheduleResponse])
 def list_schedules_for_medication(
     medication_id: int,
     db: Session = Depends(get_db),
@@ -36,13 +37,14 @@ def list_schedules_for_medication(
         raise HTTPException(status_code=403, detail="Not authorized to view schedules for this medication")
     return get_schedules_for_medication(db, medication_id)
 
-@router.get("/{patient_profile_id}", response_model=List[MedicationScheduleResponse])
-def list_schedules_for_user(
+
+@router.get("/patient/{patient_profile_id}", response_model=List[MedicationScheduleResponse])
+def list_schedules_for_patient(
     patient_profile_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_medical_staff)
 ):
-    if not can_modify_patient_schedules(db, current_user, s.medication.patient_profile_id):
+    if not can_modify_patient_schedules(db, current_user, patient_profile_id):
         raise HTTPException(status_code=403, detail="Not authorized to view schedules for this patient")
     schedules = (
         db.query(MedicationSchedule)
@@ -52,22 +54,8 @@ def list_schedules_for_user(
     )
     return schedules
 
-@router.get("", response_model=List[MedicationScheduleResponse])
-def list_schedules_for_user(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    # Fetch schedules joined with medications then filter by RBAC per row
-    all_schedules = (
-        db.query(MedicationSchedule)
-        .join(MedicationSchedule.medication)
-        .all()
-    )
-    allowed = [s for s in all_schedules if can_modify_patient_schedules(db, current_user, s.medication.patient_profile_id)]
-    return allowed
 
-
-@router.post("/medications/{medication_id}/schedules", response_model=MedicationScheduleResponse, status_code=201)
+@router.post("/{medication_id}", response_model=MedicationScheduleResponse, status_code=201)
 def create_new_schedule(
     medication_id: int,
     payload: MedicationScheduleCreate,
@@ -80,14 +68,31 @@ def create_new_schedule(
         raise HTTPException(status_code=404, detail="Medication not found.")
     if not can_modify_patient_schedules(db, current_user, medication.patient_profile_id):
         raise HTTPException(status_code=403, detail="Not authorized to create schedule for this medication")
-    schedule_exists = db.query(MedicationSchedule).filter_by(
-        medication_id=medication_id, scheduled_time=payload.scheduled_time, is_active=True
-    ).first()
-    if schedule_exists:
-        raise HTTPException(status_code=400, detail="Schedule already present.")
     schedule = create_medication_schedule(db, medication_id, payload.scheduled_time, payload.dosage_instruction)
     db.commit()
     db.refresh(schedule)
+    return schedule
+
+
+@router.get("/{schedule_id}", response_model=MedicationScheduleResponse)
+def get_schedule(
+    schedule_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Get a medication schedule by ID."""
+    schedule = db.query(MedicationSchedule).filter_by(id=schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Schedule not found.")
+
+    medication = db.query(Medication).filter_by(id=schedule.medication_id).first()
+    if not medication:
+        raise HTTPException(status_code=404, detail="Medication not found.")
+
+    # Permission check
+    if not can_modify_patient_schedules(db, current_user, medication.patient_profile_id):
+        raise HTTPException(status_code=403, detail="You do not have permission to view this schedule.")
+
     return schedule
 
 
@@ -107,8 +112,15 @@ def update_schedule(
         raise HTTPException(status_code=404, detail="Medication not found.")
     if not can_modify_patient_schedules(db, current_user, medication.patient_profile_id):
         raise HTTPException(status_code=403, detail="You do not have permission to update this schedule.")
-    update_medication_schedule(db, schedule_id, payload)
-    db.commit()
+    try:
+        update_medication_schedule(db, schedule_id, payload)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,  # Conflict
+            detail="A schedule with these details already exists."
+        )
     db.refresh(schedule)
     return schedule
 

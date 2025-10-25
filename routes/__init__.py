@@ -8,7 +8,7 @@ from routes.doctor_profiles import router as doctor_profiles_router
 
 from routes.medicines import router as medicines_router
 from routes.medications import router as medications_router
-# from routes.medication_schedules import router as medication_schedules_router
+from routes.medication_schedules import router as medication_schedules_router
 # from routes.scheduled_medication_logs import router as scheduled_medication_logs_router
 # from routes.adhoc_medication_logs import router as adhoc_medication_logs_router
 
@@ -33,7 +33,7 @@ router.include_router(doctor_profiles_router, prefix="/doctor_profiles", tags=["
 
 router.include_router(medicines_router, prefix="/medicines", tags=["Medicines"])
 router.include_router(medications_router, prefix="/medications", tags=["Medications"])
-# router.include_router(medication_schedules_router, prefix="/medication_schedules", tags=["Medication_Schedules"])
+router.include_router(medication_schedules_router, prefix="/medication_schedules", tags=["Medication_Schedules"])
 # router.include_router(scheduled_medication_logs_router, prefix="/scheduled_medication_logs", tags=["Scheduled_Medication_Logs"])
 # router.include_router(adhoc_medication_logs_router, prefix="/adhoc_medication_logs", tags=["Adhoc_Medication_Logs"])
 

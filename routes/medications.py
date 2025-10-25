@@ -75,35 +75,25 @@ def delete_medication(medication_id: int, db: Session = Depends(get_db), current
     return {"message": "Medication deleted"}
 
 
-@router.get("/me", response_model=List[MedicationResponse])
+@router.get("", response_model=List[MedicationResponse])
 def list_user_medications(db: Session = Depends(get_db), current_user=Depends(require_patient)):
     """List all medications for the current user."""
-    if current_user.role != "PATIENT":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only patients can use this endpoint.")
     medications = medications_crud.get_user_medications(db, current_user.id)
     return medications
 
 
 # 👤 For patients adding their own medication
-@router.post("/me", response_model=MedicationResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=MedicationResponse, status_code=status.HTTP_201_CREATED)
 def create_medication_for_self(payload: MedicationCreateWithSchedules, db: Session = Depends(get_db), current_user: User = Depends(require_patient)):
     """
     Create a medication for the current patient (self).
     Only accessible if the current user is a patient.
     """
-    if current_user.role != "PATIENT":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only patients can use this endpoint.")
-
-    # Use the patient profile from the authenticated user
-    patient_profile_id = current_user.patient_profile.user_id
-
-    return medications_crud.create_medication_core(db, current_user, patient_profile_id, payload)
+    return medications_crud.create_medication_core(db, current_user, current_user.id, payload)
 
 
 @router.get("/me/count", response_model=Dict[str, int])
 def count_user_medications(db: Session = Depends(get_db), current_user=Depends(require_patient)):
     """Count active medications for the current user."""
-    if current_user.role != "PATIENT":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only patients can use this endpoint.")
     active_count = medications_crud.count_medications(db, current_user.id)
     return {"active_count": active_count}
