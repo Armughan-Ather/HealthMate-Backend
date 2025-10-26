@@ -53,9 +53,9 @@ def create_connection(
 
 def get_connection(db: Session, connection_id: int, user_id: int, active_role: UserRoleEnum) -> Optional[Connection]:
     if active_role == "PATIENT":
-        return db.query(Connection).filter(Connection.id == connection_id, Connection.patient_id == user_id).first()
+        return db.query(Connection).filter(Connection.patient_id == user_id)
     else:
-        return db.query(Connection).filter(Connection.id == connection_id, Connection.connected_user_id == user_id, Connection.connection_type == ConnectionTypeEnum[active_role]).first()
+        return db.query(Connection).filter(Connection.connected_user_id == user_id, Connection.connection_type.name == active_role)
 
 
 def update_connection_status(db: Session, connection_id: int, payload: ConnectionUpdate, user_id: int, active_role: UserRoleEnum) -> Connection:
@@ -66,7 +66,6 @@ def update_connection_status(db: Session, connection_id: int, payload: Connectio
     if not conn:
         raise HTTPException(404, "Connection not found")
 
-    print(conn)
     if user_id not in {conn.patient_id, conn.connected_user_id}:
         raise HTTPException(403, "Not authorized to update this connection")
 
@@ -108,13 +107,13 @@ def get_approved_connections_for_user(db: Session, user_id: int, active_role: st
 
 def get_pending_received(db: Session, user_id: int, active_role: str) -> List[Connection]:
     if active_role == "PATIENT":
-        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.patient_id == user_id, Connection.created_by_id != user_id).all()
+        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.patient_id == user_id, Connection.created_by_id != user_id)
     else:
-        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.connected_user_id == user_id, Connection.created_by_id != user_id, Connection.connection_type == ConnectionTypeEnum[active_role]).all()
+        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.connected_user_id == user_id, Connection.created_by_id != user_id, Connection.connection_type.name == active_role)
 
 
 def get_pending_sent(db: Session, user_id: int, active_role: str) -> List[Connection]:
     if active_role == "PATIENT":
-        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.patient_id == user_id, Connection.created_by_id == user_id).all()
+        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.patient_id == user_id, Connection.created_by_id == user_id)
     else:
-        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.connected_user_id == user_id, Connection.created_by_id == user_id, Connection.connection_type == ConnectionTypeEnum[active_role]).all()
+        return db.query(Connection).filter(Connection.status == ConnectionStatusEnum.PENDING, Connection.connected_user_id == user_id, Connection.created_by_id == user_id, Connection.connection_type.name == active_role)

@@ -77,7 +77,7 @@ def update_connection_status(
     current_user: User = Depends(get_current_user),
 ):
     """Approve, reject, or revoke a connection based on user role and state transitions."""
-    connection = conn_crud.update_connection_status(db, connection_id, payload, current_user.id, current_user.active_role.value)
+    connection = conn_crud.update_connection_status(db, connection_id, payload, current_user.id)
     return connection
 
 
