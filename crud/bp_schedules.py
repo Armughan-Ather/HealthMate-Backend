@@ -157,25 +157,64 @@ def update_bp_schedule(db: Session, schedule_id: int, payload: BPScheduleUpdate)
     if payload.start_date is not None:
         schedule.start_date = payload.start_date
 
-    if payload.frequency is not None:
-        try:
-            frequency_enum = FrequencyEnum(payload.frequency)
-            schedule.frequency = frequency_enum
-        except ValueError:
+    # if payload.frequency is not None:
+    #     schedule.frequency = payload.frequency
+
+    # --- Safely update frequency and custom_days together ---
+    # Safely update frequency and custom_days together
+    if payload.frequency is not None or payload.custom_days is not None:
+        # Determine new intended values
+        new_frequency = payload.frequency or schedule.frequency
+        new_custom_days = payload.custom_days if payload.custom_days is not None else schedule.custom_days
+
+        # Convert strings to enums if necessary
+        if new_custom_days is not None:
+            try:
+                new_custom_days = [
+                    d if isinstance(d, DayOfWeekEnum) else DayOfWeekEnum(d)
+                    for d in new_custom_days
+                ]
+            except ValueError:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid custom_days values"
+                )
+
+        # Assign both at once to bypass SQLAlchemy per-attribute validation
+        object.__setattr__(schedule, "frequency", new_frequency)
+        object.__setattr__(schedule, "custom_days", new_custom_days)
+
+        # Manual consistency check (optional, safer than validator)
+        if new_frequency == FrequencyEnum.DAILY and new_custom_days is not None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid frequency: {payload.frequency}"
+                detail="custom_days must be null for DAILY frequency"
             )
+        if new_frequency == FrequencyEnum.WEEKLY and (not new_custom_days or len(new_custom_days) == 0):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="custom_days must be provided for WEEKLY frequency"
+            )
+        if new_frequency == FrequencyEnum.MONTHLY and new_custom_days is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="custom_days must be null for MONTHLY frequency"
+            )
+
+
+
     
-    if payload.custom_days is not None:
-        try:
-            custom_days_enums = [DayOfWeekEnum(day) for day in payload.custom_days] if payload.custom_days else None
-            schedule.custom_days = custom_days_enums
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid custom_days values"
-            )
+    # if payload.custom_days is not None:
+    #     try:
+    #         custom_days_enums = [DayOfWeekEnum(day) for day in payload.custom_days] if payload.custom_days else None
+    #         schedule.custom_days = custom_days_enums
+    #     except ValueError:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_400_BAD_REQUEST,
+    #             detail="Invalid custom_days values"
+    #         )
+    # if payload.custom_days is not None:
+    #     schedule.custom_days = payload.custom_days
 
     if payload.is_active is not None:
         schedule.is_active = payload.is_active

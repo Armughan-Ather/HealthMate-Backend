@@ -74,14 +74,14 @@ class BPSchedule(Base):
         freq = self.frequency if key != 'frequency' else value
         custom = self.custom_days if key != 'custom_days' else value
 
-        if freq == FrequencyEnum.DAILY:
-            if custom is not None:
-                raise ValueError("custom_days must be null for DAILY frequency")
-        elif freq == FrequencyEnum.WEEKLY:
-            if not custom or len(custom) == 0:
-                raise ValueError("custom_days must be provided for WEEKLY frequency")
-        elif freq == FrequencyEnum.MONTHLY:
-            if custom is not None:
-                raise ValueError("custom_days must be null for MONTHLY frequency")
+        # if freq == FrequencyEnum.DAILY:
+        #     if custom is not None:
+        #         raise ValueError("custom_days must be null for DAILY frequency")
+        # elif freq == FrequencyEnum.WEEKLY:
+        #     if not custom or len(custom) == 0:
+        #         raise ValueError("custom_days must be provided for WEEKLY frequency")
+        # elif freq == FrequencyEnum.MONTHLY:
+        #     if custom is not None:
+        #         raise ValueError("custom_days must be null for MONTHLY frequency")
 
         return value

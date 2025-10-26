@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 import datetime
 from typing import Optional, List
+from constants.enums import FrequencyEnum, DayOfWeekEnum
 
 
 class BPScheduleCreate(BaseModel):
@@ -15,8 +16,8 @@ class BPScheduleUpdate(BaseModel):
     scheduled_time: Optional[datetime.time] = None
     start_date: Optional[datetime.date] = None
     duration_days: Optional[int] = None
-    frequency: Optional[str] = None
-    custom_days: Optional[List[str]] = None
+    frequency: Optional[FrequencyEnum] = None
+    custom_days: Optional[List[DayOfWeekEnum]] = None
     is_active: Optional[bool] = None
 
 
@@ -26,7 +27,7 @@ class BPScheduleResponse(BaseModel):
     scheduled_time: datetime.time
     duration_days: Optional[int]
     start_date: datetime.date
-    frequency: str
+    frequency: FrequencyEnum
     custom_days: Optional[List[str]]
     is_active: bool
     created_by: int
