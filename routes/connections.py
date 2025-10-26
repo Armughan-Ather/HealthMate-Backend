@@ -9,7 +9,7 @@ from models.user_roles import UserRole
 from models.users import User
 from constants.enums import ConnectionTypeEnum
 
-router = APIRouter(prefix="/connections", tags=["Connections"])
+router = APIRouter()
 
 
 @router.post("", response_model=ConnectionResponse, status_code=status.HTTP_201_CREATED)
@@ -77,7 +77,7 @@ def update_connection_status(
     current_user: User = Depends(get_current_user),
 ):
     """Approve, reject, or revoke a connection based on user role and state transitions."""
-    connection = conn_crud.update_connection_status(db, connection_id, payload, current_user.id,current_user.active_role.value)
+    connection = conn_crud.update_connection_status(db, connection_id, payload, current_user.id, current_user.active_role.value)
     return connection
 
 
