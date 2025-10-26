@@ -51,11 +51,28 @@ def create_connection(
     return conn
 
 
-def get_connection(db: Session, connection_id: int, user_id: int, active_role: UserRoleEnum) -> Optional[Connection]:
+# def get_connection(db: Session, connection_id: int, user_id: int, active_role: UserRoleEnum) -> Optional[Connection]:
+#     if active_role == "PATIENT":
+#         return db.query(Connection).filter(Connection.patient_id == user_id)
+#     else:
+#         return db.query(Connection).filter(Connection.connected_user_id == user_id, Connection.connection_type.name == active_role)
+def get_connection(
+    db: Session,
+    connection_id: int,
+    user_id: int,
+    active_role: UserRoleEnum
+) -> Optional[Connection]:
+    query = db.query(Connection).filter(Connection.id == connection_id)
+
     if active_role == "PATIENT":
-        return db.query(Connection).filter(Connection.patient_id == user_id)
+        query = query.filter(Connection.patient_id == user_id)
     else:
-        return db.query(Connection).filter(Connection.connected_user_id == user_id, Connection.connection_type.name == active_role)
+        query = query.filter(
+            Connection.connected_user_id == user_id,
+            Connection.connection_type == active_role  # compare directly to Enum
+        )
+
+    return query.first()
 
 
 def update_connection_status(db: Session, connection_id: int, payload: ConnectionUpdate, user_id: int, active_role: UserRoleEnum) -> Connection:
