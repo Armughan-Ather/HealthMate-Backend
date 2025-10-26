@@ -15,7 +15,7 @@ from routes.medication_schedules import router as medication_schedules_router
 # from routes.chats import router as chats_router
 from routes.messages import router as messages_router
 from routes.bp_schedules import router as bp_schedules_router
-# from routes.sugar_schedules import router as sugar_schedules_router
+from routes.sugar_schedules import router as sugar_schedules_router
 # from routes.scheduled_bp_logs import router as bp_logs_router
 # from routes.scheduled_sugar_logs import router as sugar_logs_router
 # from routes.insights import router as insights_router
@@ -41,7 +41,7 @@ router.include_router(medication_schedules_router, prefix="/medication_schedules
 # router.include_router(messages_router, prefix="/messages", tags=["Messages"])
 router.include_router(bp_schedules_router, prefix="/bp_schedules", tags=["BP_Schedules"])
 # router.include_router(bp_logs_router, prefix="/bp_logs", tags=["BP_Logs"])
-# router.include_router(sugar_schedules_router, prefix="/sugar_schedules", tags=["Sugar_Schedules"])
+router.include_router(sugar_schedules_router, prefix="/sugar_schedules", tags=["Sugar_Schedules"])
 # router.include_router(sugar_logs_router, prefix="/sugar_logs", tags=["Sugar_Logs"])
 # router.include_router(insights_router, prefix="/insights", tags=["Insights"])
 # router.include_router(alerts_router, prefix="/alerts", tags=["Alerts"])

@@ -79,17 +79,19 @@ def create_bp_schedules_with_times(
             )
     
     for scheduled_time in payload.scheduled_time:
-        # Check for existing active schedule at this time
+        # Only check for exact duplicates (same time and start date)
+        # Allow multiple schedules with same time but different dates
         existing = db.query(BPSchedule).filter_by(
             patient_profile_id=patient_profile_id,
             scheduled_time=scheduled_time,
+            start_date=payload.start_date,
             is_active=True
         ).first()
         
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"An active BP schedule already exists at {scheduled_time.strftime('%H:%M')}."
+                detail=f"A BP schedule already exists for {scheduled_time.strftime('%H:%M')} starting on {payload.start_date}."
             )
 
         schedule = BPSchedule(
@@ -224,10 +226,11 @@ def update_bp_schedule(db: Session, schedule_id: int, payload: BPScheduleUpdate)
         new_time = normalize_time(payload.scheduled_time)
         
         if new_time != schedule.scheduled_time:
-            # Check for conflicts with other active schedules
+            # Check for conflicts with other active schedules (same time and start date)
             conflicting = db.query(BPSchedule).filter(
                 BPSchedule.patient_profile_id == schedule.patient_profile_id,
                 BPSchedule.scheduled_time == new_time,
+                BPSchedule.start_date == schedule.start_date,
                 BPSchedule.is_active.is_(True),
                 BPSchedule.id != schedule.id
             ).first()
@@ -235,7 +238,7 @@ def update_bp_schedule(db: Session, schedule_id: int, payload: BPScheduleUpdate)
             if conflicting:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"An active BP schedule already exists at {new_time.strftime('%H:%M')}."
+                    detail=f"A BP schedule already exists for {new_time.strftime('%H:%M')} starting on {schedule.start_date}."
                 )
             
             schedule.scheduled_time = new_time
