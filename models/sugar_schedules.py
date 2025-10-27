@@ -3,7 +3,7 @@ from sqlalchemy import (
     DateTime, ForeignKey, Enum, CheckConstraint, Index, ARRAY
 )
 from sqlalchemy.orm import relationship, validates
-from datetime import date
+from datetime import date, time
 from sqlalchemy.sql import func
 from database import Base
 from constants.enums import FrequencyEnum, DayOfWeekEnum, SugarTypeEnum
@@ -45,6 +45,12 @@ class SugarSchedule(Base):
         Index('idx_sugar_schedule_patient_active', 'patient_profile_id', 'is_active'),
     )
 
+    @validates('scheduled_time')
+    def validate_scheduled_time(self, key, value):
+        if not isinstance(value, time):
+            raise ValueError("scheduled_time must be a valid time")
+        return value
+
     @validates('duration_days')
     def validate_duration_days(self, key, value):
         if value is not None:
@@ -66,18 +72,19 @@ class SugarSchedule(Base):
         Validate the consistency between frequency and custom_days.
         Mirrors the DB constraint but catches issues earlier at the ORM layer.
         """
+        # COMMENTED OUT TO AVOID RECURSION - validation moved to CRUD layer
         # temporarily assign to current object for cross-field validation
-        setattr(self, key, value)
+        # setattr(self, key, value)
 
-        freq = getattr(self, 'frequency', None)
-        days = getattr(self, 'custom_days', None)
+        # freq = getattr(self, 'frequency', None)
+        # days = getattr(self, 'custom_days', None)
 
-        if freq is not None:
-            if freq == FrequencyEnum.DAILY and days is not None:
-                raise ValueError("custom_days must be NULL when frequency is DAILY")
-            elif freq == FrequencyEnum.WEEKLY and (days is None or len(days) == 0):
-                raise ValueError("custom_days must be provided when frequency is WEEKLY")
-            elif freq == FrequencyEnum.MONTHLY and days is not None:
-                raise ValueError("custom_days must be NULL when frequency is MONTHLY")
+        # if freq is not None:
+        #     if freq == FrequencyEnum.DAILY and days is not None:
+        #         raise ValueError("custom_days must be NULL when frequency is DAILY")
+        #     elif freq == FrequencyEnum.WEEKLY and (days is None or len(days) == 0):
+        #         raise ValueError("custom_days must be provided when frequency is WEEKLY")
+        #     elif freq == FrequencyEnum.MONTHLY and days is not None:
+        #         raise ValueError("custom_days must be NULL when frequency is MONTHLY")
 
         return value
